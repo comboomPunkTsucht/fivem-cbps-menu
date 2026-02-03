@@ -31,6 +31,7 @@ namespace CBPSMenu.Client.Menus
 
         // Race settings
         private float _checkpointRadius = 10.0f;
+        private float _checkpointRadiusSquared = 100.0f; // Cached for performance
         private int _maxCheckpoints = 20;
         private int _countdownTime = 5;
 
@@ -204,6 +205,7 @@ namespace CBPSMenu.Client.Menus
             radiusItem.ItemChanged += (sender, args) =>
             {
                 _checkpointRadius = radiusItem.SelectedItem;
+                _checkpointRadiusSquared = _checkpointRadius * _checkpointRadius; // Update cached value
                 Main.ShowNotification($"~b~Checkpoint radius set to: {_checkpointRadius}m");
             };
             Menu.Add(radiusItem);
@@ -414,9 +416,9 @@ namespace CBPSMenu.Client.Menus
                     _checkpointRadius * 2, _checkpointRadius * 2, 2.0f,
                     0, 255, 0, 100, false, true, 2, false, null, null, false);
 
-                // Check if player reached checkpoint
+                // Check if player reached checkpoint (use cached squared radius for performance)
                 float distance = playerPos.DistanceToSquared(checkpoint);
-                if (distance < (_checkpointRadius * _checkpointRadius))
+                if (distance < _checkpointRadiusSquared)
                 {
                     ReachCheckpoint();
                 }

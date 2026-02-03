@@ -87,36 +87,42 @@ namespace CBPSMenu.Shared
 
         /// <summary>
         /// Get an integer setting from KVP storage
+        /// Note: Uses string-based storage to properly detect missing vs zero values
         /// </summary>
         public static int GetSettingsInt(string key, int defaultValue = 0)
         {
-            var value = API.GetResourceKvpInt(key);
-            if (value == 0)
+            // Use string storage to distinguish between "not set" and "set to 0"
+            var strValue = API.GetResourceKvpString(key);
+            if (!string.IsNullOrEmpty(strValue) && int.TryParse(strValue, out int result))
             {
-                if (DefaultSettings.ContainsKey(key))
-                {
-                    return Convert.ToInt32(DefaultSettings[key]);
-                }
-                return defaultValue;
+                return result;
             }
-            return value;
+            
+            if (DefaultSettings.ContainsKey(key))
+            {
+                return Convert.ToInt32(DefaultSettings[key]);
+            }
+            return defaultValue;
         }
 
         /// <summary>
         /// Get a float setting from KVP storage
+        /// Note: Uses string-based storage to properly detect missing vs zero values
         /// </summary>
         public static float GetSettingsFloat(string key, float defaultValue = 0f)
         {
-            var value = API.GetResourceKvpFloat(key);
-            if (value == 0f)
+            // Use string storage to distinguish between "not set" and "set to 0.0"
+            var strValue = API.GetResourceKvpString(key);
+            if (!string.IsNullOrEmpty(strValue) && float.TryParse(strValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float result))
             {
-                if (DefaultSettings.ContainsKey(key))
-                {
-                    return Convert.ToSingle(DefaultSettings[key]);
-                }
-                return defaultValue;
+                return result;
             }
-            return value;
+            
+            if (DefaultSettings.ContainsKey(key))
+            {
+                return Convert.ToSingle(DefaultSettings[key]);
+            }
+            return defaultValue;
         }
 
         #endregion
@@ -141,18 +147,20 @@ namespace CBPSMenu.Shared
 
         /// <summary>
         /// Set an integer setting to KVP storage
+        /// Note: Uses string storage for consistency with GetSettingsInt
         /// </summary>
         public static void SetSettingsInt(string key, int value)
         {
-            API.SetResourceKvpInt(key, value);
+            API.SetResourceKvp(key, value.ToString());
         }
 
         /// <summary>
         /// Set a float setting to KVP storage
+        /// Note: Uses string storage for consistency with GetSettingsFloat
         /// </summary>
         public static void SetSettingsFloat(string key, float value)
         {
-            API.SetResourceKvpFloat(key, value);
+            API.SetResourceKvp(key, value.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
 
         #endregion

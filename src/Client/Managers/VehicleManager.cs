@@ -240,9 +240,9 @@ namespace CBPSMenu.Client.Managers
             var vehicle = Game.PlayerPed.CurrentVehicle;
             if (vehicle != null)
             {
-                int secondary = 0;
-                API.GetVehicleColours(vehicle.Handle, ref colorIndex, ref secondary);
-                API.SetVehicleColours(vehicle.Handle, colorIndex, secondary);
+                int currentPrimary = 0, currentSecondary = 0;
+                API.GetVehicleColours(vehicle.Handle, ref currentPrimary, ref currentSecondary);
+                API.SetVehicleColours(vehicle.Handle, colorIndex, currentSecondary);
                 Main.ShowNotification("~g~Primary color set!");
             }
             else
@@ -259,9 +259,9 @@ namespace CBPSMenu.Client.Managers
             var vehicle = Game.PlayerPed.CurrentVehicle;
             if (vehicle != null)
             {
-                int primary = 0;
-                API.GetVehicleColours(vehicle.Handle, ref primary, ref colorIndex);
-                API.SetVehicleColours(vehicle.Handle, primary, colorIndex);
+                int currentPrimary = 0, currentSecondary = 0;
+                API.GetVehicleColours(vehicle.Handle, ref currentPrimary, ref currentSecondary);
+                API.SetVehicleColours(vehicle.Handle, currentPrimary, colorIndex);
                 Main.ShowNotification("~g~Secondary color set!");
             }
             else

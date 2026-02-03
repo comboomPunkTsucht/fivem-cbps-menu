@@ -114,11 +114,13 @@ namespace CBPSMenu.Client.Menus
                 Main.VehicleManagerInstance.VehicleNoBikeFall = _noBikeFallItem.Checked;
                 if (_noBikeFallItem.Checked)
                 {
-                    API.SetPedCanBeKnockedOffVehicle(Game.PlayerPed.Handle, 1);
+                    // 0 = cannot be knocked off
+                    API.SetPedCanBeKnockedOffVehicle(Game.PlayerPed.Handle, 0);
                 }
                 else
                 {
-                    API.SetPedCanBeKnockedOffVehicle(Game.PlayerPed.Handle, 0);
+                    // 1 = can be knocked off (default)
+                    API.SetPedCanBeKnockedOffVehicle(Game.PlayerPed.Handle, 1);
                 }
                 Main.ShowNotification(_noBikeFallItem.Checked ? "~g~No Bike Fall: ON" : "~r~No Bike Fall: OFF");
             };

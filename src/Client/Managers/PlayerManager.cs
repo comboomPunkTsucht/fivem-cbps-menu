@@ -202,14 +202,15 @@ namespace CBPSMenu.Client.Managers
                 speed = _noclipSpeed * _noclipFastMultiplier;
             }
 
-            // W - Forward
+            // W - Forward (horizontal only, vertical movement is handled separately with Q/E)
+            // This provides more intuitive control for most use cases
             if (API.IsControlPressed(0, 32))
             {
                 var forward = API.GetEntityForwardVector(playerPed.Handle);
                 position += new Vector3(forward.X, forward.Y, 0) * speed;
             }
 
-            // S - Backward
+            // S - Backward (horizontal only)
             if (API.IsControlPressed(0, 33))
             {
                 var forward = API.GetEntityForwardVector(playerPed.Handle);
