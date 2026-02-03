@@ -241,6 +241,37 @@ function BuildMenus()
         
         local themeList = lemon:CreateListItem('Menu Theme', themeNames, 1)
         settingsMenu:AddItem(themeList)
+        
+        -- Custom theme creator
+        if Config.AllowCustomThemes then
+            local createThemeItem = lemon:CreateItem('Create Custom Theme', 'Design your own theme')
+            settingsMenu:AddItem(createThemeItem)
+            
+            local manageThemesItem = lemon:CreateItem('Manage Custom Themes', 'Edit or delete custom themes')
+            settingsMenu:AddItem(manageThemesItem)
+        end
+        
+        -- Keybindings info
+        local keybindsItem = lemon:CreateItem('View Keybindings', 'Show current keybindings')
+        settingsMenu:AddItem(keybindsItem)
+        
+        -- Controller info
+        if Config.Controller.Enabled then
+            local controllerItem = lemon:CreateItem('Controller Support', 'Controller is enabled')
+            settingsMenu:AddItem(controllerItem)
+        end
+    end
+    
+    -- Race template management in race menu
+    if Config.Race.Enabled and Config.Race.SaveRaces and raceMenu then
+        local saveRaceItem = lemon:CreateItem('Save Race Template', 'Save current race for future use')
+        raceMenu:AddItem(saveRaceItem)
+        
+        local loadRaceItem = lemon:CreateItem('Load Race Template', 'Load a saved race')
+        raceMenu:AddItem(loadRaceItem)
+        
+        local manageRacesItem = lemon:CreateItem('Manage Race Templates', 'View and delete saved races')
+        raceMenu:AddItem(manageRacesItem)
     end
     
     -- Event handlers
@@ -361,12 +392,35 @@ function SetupEventHandlers()
     -- Race menu events
     if raceMenu and Config.Race.Enabled then
         raceMenu.OnItemSelect = function(sender, item, index)
+            local baseItems = 6 -- Number of base race items
             if index == 1 then TriggerServerEvent('cbps:createRace')
             elseif index == 2 then TriggerServerEvent('cbps:joinRace')
             elseif index == 3 then TriggerServerEvent('cbps:leaveRace')
             elseif index == 4 then TriggerServerEvent('cbps:startRace')
             elseif index == 5 then TriggerEvent('cbps:addCheckpoint')
             elseif index == 6 then TriggerEvent('cbps:clearCheckpoints')
+            elseif Config.Race.SaveRaces then
+                -- New items for race templates
+                if index == baseItems + 1 then
+                    -- Save Race Template
+                    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Enter race name", "", "", "", 32)
+                    while UpdateOnscreenKeyboard() == 0 do
+                        Citizen.Wait(0)
+                    end
+                    if GetOnscreenKeyboardResult() then
+                        local raceName = GetOnscreenKeyboardResult()
+                        if raceName and raceName ~= "" then
+                            TriggerServerEvent('cbps:saveRaceTemplate', raceName)
+                        end
+                    end
+                elseif index == baseItems + 2 then
+                    -- Load Race Template
+                    TriggerServerEvent('cbps:getSavedRaceTemplates')
+                elseif index == baseItems + 3 then
+                    -- Manage Race Templates
+                    TriggerServerEvent('cbps:getSavedRaceTemplates')
+                    -- TODO: Show management menu
+                end
             end
         end
     end
@@ -411,5 +465,109 @@ function SetupEventHandlers()
                 end
             end
         end
+        
+        settingsMenu.OnItemSelect = function(sender, item, index)
+            local baseIndex = 1 -- Theme list is index 1
+            if Config.AllowCustomThemes then
+                if index == baseIndex + 1 then
+                    -- Create Custom Theme
+                    CreateCustomThemeMenu()
+                elseif index == baseIndex + 2 then
+                    -- Manage Custom Themes
+                    ManageCustomThemesMenu()
+                elseif index == baseIndex + 3 then
+                    -- View Keybindings
+                    ShowKeybindingsInfo()
+                elseif index == baseIndex + 4 and Config.Controller.Enabled then
+                    -- Controller Support
+                    ShowControllerInfo()
+                end
+            else
+                if index == baseIndex + 1 then
+                    -- View Keybindings
+                    ShowKeybindingsInfo()
+                elseif index == baseIndex + 2 and Config.Controller.Enabled then
+                    -- Controller Support
+                    ShowControllerInfo()
+                end
+            end
+        end
     end
+end
+
+-- Custom Theme Creator
+function CreateCustomThemeMenu()
+    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Enter theme name", "", "", "", 32)
+    while UpdateOnscreenKeyboard() == 0 do
+        Citizen.Wait(0)
+    end
+    
+    if not GetOnscreenKeyboardResult() then return end
+    local themeName = GetOnscreenKeyboardResult()
+    if not themeName or themeName == "" then return end
+    
+    -- Get banner color (RGB)
+    ShowNotification('~y~Enter Banner Red (0-255)')
+    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Red (0-255)", "", "", "", 3)
+    while UpdateOnscreenKeyboard() == 0 do Citizen.Wait(0) end
+    local bannerR = tonumber(GetOnscreenKeyboardResult()) or 0
+    
+    ShowNotification('~y~Enter Banner Green (0-255)')
+    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Green (0-255)", "", "", "", 3)
+    while UpdateOnscreenKeyboard() == 0 do Citizen.Wait(0) end
+    local bannerG = tonumber(GetOnscreenKeyboardResult()) or 0
+    
+    ShowNotification('~y~Enter Banner Blue (0-255)')
+    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Blue (0-255)", "", "", "", 3)
+    while UpdateOnscreenKeyboard() == 0 do Citizen.Wait(0) end
+    local bannerB = tonumber(GetOnscreenKeyboardResult()) or 0
+    
+    -- Create theme data
+    local themeData = {
+        name = themeName,
+        banner = {r = bannerR, g = bannerG, b = bannerB, a = 255},
+        highlight = {r = bannerR, g = bannerG, b = bannerB, a = 255},
+        textColor = {r = 255, g = 255, b = 255, a = 255}
+    }
+    
+    -- Add custom theme
+    exports['cbps-menu']:AddCustomTheme('custom_' .. themeName:lower():gsub(' ', '_'), themeData)
+end
+
+function ManageCustomThemesMenu()
+    local customThemes = exports['cbps-menu']:GetCustomThemes()
+    local themeCount = 0
+    for _ in pairs(customThemes) do themeCount = themeCount + 1 end
+    
+    if themeCount == 0 then
+        ShowNotification('~y~No custom themes created yet')
+        return
+    end
+    
+    ShowNotification('~b~Custom themes: ' .. themeCount)
+    -- TODO: Create submenu to manage themes
+end
+
+function ShowKeybindingsInfo()
+    ShowNotification('~b~CBPS Menu Keybindings:')
+    Citizen.Wait(100)
+    ShowNotification('~y~Menu: ' .. Config.Keybinds.OpenMenu.key)
+    Citizen.Wait(100)
+    ShowNotification('~y~Voice Range: ' .. Config.Keybinds.VoiceRange.key)
+    if Config.Keybinds.Noclip.key then
+        Citizen.Wait(100)
+        ShowNotification('~y~Noclip: ' .. Config.Keybinds.Noclip.key)
+    end
+end
+
+function ShowControllerInfo()
+    ShowNotification('~b~Controller Support Enabled')
+    Citizen.Wait(100)
+    ShowNotification('~y~Open Menu: ' .. Config.Controller.OpenMenu)
+    Citizen.Wait(100)
+    ShowNotification('~y~Navigate: D-PAD')
+    Citizen.Wait(100)
+    ShowNotification('~y~Select: ' .. Config.Controller.Select)
+    Citizen.Wait(100)
+    ShowNotification('~y~Back: ' .. Config.Controller.Back)
 end

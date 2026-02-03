@@ -8,9 +8,41 @@ Config.MenuTitle = 'CBPS Menu'
 Config.AdminOnly = false -- Set to true to restrict menu to admins only
 Config.Admins = {} -- List of admin identifiers
 
+-- Keybind Settings (Configurable Keys)
+Config.Keybinds = {
+    OpenMenu = {
+        key = 'F1',
+        controller = 'BACK', -- SELECT/BACK button on controller
+        description = 'Open CBPS Menu'
+    },
+    VoiceRange = {
+        key = 'LMENU', -- Left ALT
+        controller = 'DPAD_DOWN',
+        description = 'Cycle Voice Range'
+    },
+    Noclip = {
+        key = 'F2', -- Optional quick toggle
+        controller = nil,
+        description = 'Toggle Noclip (if enabled)'
+    }
+}
+
+-- Controller Settings
+Config.Controller = {
+    Enabled = true, -- Enable controller support
+    NavigateUp = 'DPAD_UP',
+    NavigateDown = 'DPAD_DOWN',
+    NavigateLeft = 'DPAD_LEFT',
+    NavigateRight = 'DPAD_RIGHT',
+    Select = 'A', -- A button (Xbox) / X button (PlayStation)
+    Back = 'B', -- B button (Xbox) / Circle button (PlayStation)
+    OpenMenu = 'BACK' -- SELECT/BACK button
+}
+
 -- Theme Settings
 Config.DefaultTheme = 'blue' -- Default theme: blue, red, green, purple, orange, yellow, pink, dark, light
 Config.AllowThemeChange = true -- Allow players to change theme
+Config.AllowCustomThemes = true -- Allow players to create custom themes
 
 Config.Themes = {
     blue = {
@@ -115,7 +147,9 @@ Config.Race = {
     MaxCheckpoints = 20,
     CheckpointRadius = 10.0,
     CountdownTime = 5, -- seconds
-    ShowLeaderboard = true
+    ShowLeaderboard = true,
+    SaveRaces = true, -- Save races between server restarts
+    RaceSaveFile = 'cbps_races.json' -- File to save races
 }
 
 -- Vehicle Spawner Categories

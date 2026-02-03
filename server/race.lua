@@ -4,6 +4,131 @@ local races = {}
 local playerRaces = {}
 local raceResults = {}
 local nextRaceId = 1
+local savedRaceTemplates = {} -- Persistent race templates
+
+-- Load saved races on server start
+Citizen.CreateThread(function()
+    if Config.Race.SaveRaces then
+        LoadSavedRaces()
+    end
+end)
+
+-- Save/Load race templates
+function SaveRacesToFile()
+    if not Config.Race.SaveRaces then return end
+    
+    local data = json.encode(savedRaceTemplates, {indent = true})
+    SaveResourceFile(GetCurrentResourceName(), Config.Race.RaceSaveFile, data, -1)
+    print('[CBPS Menu] Saved ' .. #savedRaceTemplates .. ' race templates')
+end
+
+function LoadSavedRaces()
+    local data = LoadResourceFile(GetCurrentResourceName(), Config.Race.RaceSaveFile)
+    if data then
+        savedRaceTemplates = json.decode(data) or {}
+        print('[CBPS Menu] Loaded ' .. #savedRaceTemplates .. ' race templates')
+    else
+        savedRaceTemplates = {}
+        print('[CBPS Menu] No saved races found, starting fresh')
+    end
+end
+
+-- Save race template
+RegisterNetEvent('cbps:saveRaceTemplate')
+AddEventHandler('cbps:saveRaceTemplate', function(raceName)
+    local playerId = source
+    local raceId = playerRaces[playerId]
+    
+    if not raceId then
+        TriggerClientEvent('cbps:showNotification', playerId, '~r~No active race to save')
+        return
+    end
+    
+    local race = races[raceId]
+    if not race or race.creator ~= playerId then
+        TriggerClientEvent('cbps:showNotification', playerId, '~r~You can only save races you created')
+        return
+    end
+    
+    if #race.checkpoints == 0 then
+        TriggerClientEvent('cbps:showNotification', playerId, '~r~Cannot save race with no checkpoints')
+        return
+    end
+    
+    -- Create template
+    local template = {
+        name = raceName,
+        checkpoints = race.checkpoints,
+        createdBy = GetPlayerName(playerId),
+        createdAt = os.time()
+    }
+    
+    table.insert(savedRaceTemplates, template)
+    SaveRacesToFile()
+    
+    TriggerClientEvent('cbps:showNotification', playerId, '~g~Race template "' .. raceName .. '" saved!')
+    print('[CBPS Menu] Race template "' .. raceName .. '" saved by ' .. GetPlayerName(playerId))
+end)
+
+-- Load race template
+RegisterNetEvent('cbps:loadRaceTemplate')
+AddEventHandler('cbps:loadRaceTemplate', function(templateIndex)
+    local playerId = source
+    
+    if not savedRaceTemplates[templateIndex] then
+        TriggerClientEvent('cbps:showNotification', playerId, '~r~Race template not found')
+        return
+    end
+    
+    local template = savedRaceTemplates[templateIndex]
+    
+    -- Create new race from template
+    local raceId = nextRaceId
+    nextRaceId = nextRaceId + 1
+    
+    races[raceId] = {
+        id = raceId,
+        creator = playerId,
+        checkpoints = template.checkpoints,
+        participants = {playerId},
+        started = false,
+        finished = {},
+        createdAt = os.time(),
+        templateName = template.name
+    }
+    
+    playerRaces[playerId] = raceId
+    
+    TriggerClientEvent('cbps:raceCreated', playerId, raceId)
+    TriggerClientEvent('cbps:raceTemplateLoaded', playerId, template.checkpoints)
+    TriggerClientEvent('cbps:showNotification', playerId, '~g~Loaded race template: ' .. template.name)
+    print('[CBPS Menu] Race template "' .. template.name .. '" loaded by ' .. GetPlayerName(playerId))
+end)
+
+-- Get saved race templates
+RegisterNetEvent('cbps:getSavedRaceTemplates')
+AddEventHandler('cbps:getSavedRaceTemplates', function()
+    local playerId = source
+    TriggerClientEvent('cbps:receiveSavedRaceTemplates', playerId, savedRaceTemplates)
+end)
+
+-- Delete race template
+RegisterNetEvent('cbps:deleteRaceTemplate')
+AddEventHandler('cbps:deleteRaceTemplate', function(templateIndex)
+    local playerId = source
+    
+    if not savedRaceTemplates[templateIndex] then
+        TriggerClientEvent('cbps:showNotification', playerId, '~r~Race template not found')
+        return
+    end
+    
+    local templateName = savedRaceTemplates[templateIndex].name
+    table.remove(savedRaceTemplates, templateIndex)
+    SaveRacesToFile()
+    
+    TriggerClientEvent('cbps:showNotification', playerId, '~g~Deleted race template: ' .. templateName)
+    print('[CBPS Menu] Race template "' .. templateName .. '" deleted by ' .. GetPlayerName(playerId))
+end)
 
 -- Create race
 RegisterNetEvent('cbps:createRace')
