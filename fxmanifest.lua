@@ -2,10 +2,10 @@ fx_version 'cerulean'
 game 'gta5'
 
 author 'CBPS Menu'
-description 'A comprehensive FiveM menu with VMenu functions, pma-voice/radio control, team management, and race features'
+description 'A vMenu-style FiveM menu using LemonUI with Nord theme, pma-voice/radio control, team management, and race features'
 version '1.0.0'
 
--- C# Menu using LemonUI
+-- C# Menu using LemonUI (main entry point)
 client_scripts {
     'CBPSMenu.net.dll'
 }
@@ -28,9 +28,10 @@ server_scripts {
     'server/race.lua'
 }
 
--- LemonUI library
+-- LemonUI library and Newtonsoft.Json for race system
 files {
-    'LemonUI.FiveM.dll'
+    'LemonUI.FiveM.dll',
+    'Newtonsoft.Json.dll'
 }
 
 -- Required dependencies
