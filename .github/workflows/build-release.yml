@@ -1,13 +1,19 @@
 name: Build and Release
 
 on:
-  push:
+  # Trigger on PRs merged to release branch
+  pull_request:
+    types: [closed]
     branches:
       - release
       - release/*
+  # Also allow manual trigger
+  workflow_dispatch:
 
 jobs:
   build:
+    # Only run if PR was merged (not just closed) or if manually triggered
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -94,7 +100,9 @@ jobs:
             - **F9** - Reset Player State (emergency)
             
             ### Changes
-            ${{ github.event.head_commit.message }}
+            ${{ github.event.pull_request.title || 'Manual build' }}
+            
+            ${{ github.event.pull_request.body || '' }}
           files: |
             fivem-cbps-menu.zip
           draft: false
