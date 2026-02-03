@@ -61,6 +61,29 @@ function BuildMenus()
     local suicideItem = lemon:CreateItem('Suicide', '~r~Kill yourself')
     playerMenu:AddItem(suicideItem)
     
+    -- Character Management Menu
+    local characterMenu = lemon:CreateSubMenu(mainMenu, 'Character Manager', '~b~Create and manage characters')
+    pool:AddSubMenu(characterMenu)
+    exports['cbps-menu']:ApplyTheme(characterMenu)
+    
+    local createCharItem = lemon:CreateItem('Create Character', 'Randomize appearance')
+    characterMenu:AddItem(createCharItem)
+    
+    local saveCharItem = lemon:CreateItem('Save Character', 'Save current appearance')
+    characterMenu:AddItem(saveCharItem)
+    
+    local loadCharItem = lemon:CreateItem('Load Character', 'Load saved character')
+    characterMenu:AddItem(loadCharItem)
+    
+    local setDefaultCharItem = lemon:CreateItem('Set Default Character', 'Set character to load on spawn')
+    characterMenu:AddItem(setDefaultCharItem)
+    
+    local deleteCharItem = lemon:CreateItem('Delete Character', 'Delete saved character')
+    characterMenu:AddItem(deleteCharItem)
+    
+    local listCharItem = lemon:CreateItem('List Characters', 'Show all saved characters')
+    characterMenu:AddItem(listCharItem)
+    
     -- Vehicle Options Menu
     vehicleMenu = lemon:CreateSubMenu(mainMenu, 'Vehicle Options', '~b~Manage vehicles')
     pool:AddSubMenu(vehicleMenu)
@@ -296,6 +319,91 @@ function SetupEventHandlers()
             elseif index == 5 then ToggleNoclip()
             elseif index == 6 then ToggleSuperJump()
             elseif index == 7 then ToggleFastRun()
+            end
+        end
+    end
+    
+    -- Character menu events
+    if characterMenu then
+        characterMenu.OnItemSelect = function(sender, item, index)
+            if index == 1 then
+                -- Create Character
+                exports['cbps-menu']:OpenCharacterCreator()
+            elseif index == 2 then
+                -- Save Character
+                DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Enter character name", "", "", "", 32)
+                while UpdateOnscreenKeyboard() == 0 do
+                    Citizen.Wait(0)
+                end
+                if GetOnscreenKeyboardResult() then
+                    local characterName = GetOnscreenKeyboardResult()
+                    exports['cbps-menu']:SaveCharacter(characterName)
+                end
+            elseif index == 3 then
+                -- Load Character
+                local savedChars = exports['cbps-menu']:GetSavedCharacters()
+                if next(savedChars) == nil then
+                    ShowNotification('~r~No saved characters')
+                else
+                    -- Show list and prompt for name
+                    ShowNotification('~b~Saved characters:')
+                    for name, _ in pairs(savedChars) do
+                        ShowNotification('~y~' .. name)
+                    end
+                    Citizen.Wait(500)
+                    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Enter character name to load", "", "", "", 32)
+                    while UpdateOnscreenKeyboard() == 0 do
+                        Citizen.Wait(0)
+                    end
+                    if GetOnscreenKeyboardResult() then
+                        local characterName = GetOnscreenKeyboardResult()
+                        exports['cbps-menu']:LoadCharacter(characterName)
+                    end
+                end
+            elseif index == 4 then
+                -- Set Default Character
+                local savedChars = exports['cbps-menu']:GetSavedCharacters()
+                if next(savedChars) == nil then
+                    ShowNotification('~r~No saved characters')
+                else
+                    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Enter character name for default", "", "", "", 32)
+                    while UpdateOnscreenKeyboard() == 0 do
+                        Citizen.Wait(0)
+                    end
+                    if GetOnscreenKeyboardResult() then
+                        local characterName = GetOnscreenKeyboardResult()
+                        exports['cbps-menu']:SetDefaultCharacter(characterName)
+                    end
+                end
+            elseif index == 5 then
+                -- Delete Character
+                local savedChars = exports['cbps-menu']:GetSavedCharacters()
+                if next(savedChars) == nil then
+                    ShowNotification('~r~No saved characters')
+                else
+                    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "Enter character name to delete", "", "", "", 32)
+                    while UpdateOnscreenKeyboard() == 0 do
+                        Citizen.Wait(0)
+                    end
+                    if GetOnscreenKeyboardResult() then
+                        local characterName = GetOnscreenKeyboardResult()
+                        exports['cbps-menu']:DeleteCharacter(characterName)
+                    end
+                end
+            elseif index == 6 then
+                -- List Characters
+                local savedChars = exports['cbps-menu']:GetSavedCharacters()
+                if next(savedChars) == nil then
+                    ShowNotification('~r~No saved characters')
+                else
+                    ShowNotification('~b~=== Saved Characters ===')
+                    local count = 0
+                    for name, _ in pairs(savedChars) do
+                        count = count + 1
+                        Citizen.Wait(100)
+                        ShowNotification('~y~' .. count .. '. ' .. name)
+                    end
+                end
             end
         end
     end

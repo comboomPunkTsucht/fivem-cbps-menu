@@ -1,6 +1,39 @@
 # CBPS Menu
 
-A comprehensive FiveM menu resource with all VMenu functions, pma-voice/pma-radio control, team management, and race features. Built with LemonUI for a native GTA-style interface with full theme customization.
+A comprehensive FiveM menu resource with all VMenu functions, pma-voice/pma-radio control, team management, race features, **character creation**, **custom themes**, **configurable keybindings**, and **controller support**. Built with LemonUI for a native GTA-style interface with full customization and **persistent settings**.
+
+## 🆕 New Features (v2.0)
+
+### Character Creation & Management
+- **Create Characters**: Randomize and customize your appearance
+- **Save Unlimited Characters**: Save as many character presets as you want
+- **Load Anytime**: Switch between saved characters instantly
+- **Default Character**: Set a character to auto-load on spawn
+- **Persistent Storage**: All characters saved client-side
+
+### Configurable Keybindings
+- **FiveM Native Integration**: Use FiveM's built-in keybinding system
+- **Customizable**: Players can rebind keys in FiveM settings
+- **Controller Support**: Full Xbox/PlayStation controller support
+- **D-Pad Navigation**: Navigate menus with controller
+- **Configurable Buttons**: All controller buttons customizable
+
+### Custom Theme Creator
+- **RGB Color Picker**: Create themes with custom colors
+- **Unlimited Themes**: Create as many custom themes as you want
+- **Persistent Storage**: Custom themes saved client-side
+- **Live Preview**: See theme changes in real-time
+
+### Race Persistence
+- **Save Race Templates**: Save races between server restarts
+- **Load Saved Races**: Instantly load pre-made races
+- **JSON Storage**: Races saved to file for backup
+
+### Comprehensive Settings System
+- **Everything Saveable**: All player preferences automatically saved
+- **Server Defaults**: Admin-configurable default settings
+- **Auto-Sync**: Settings sync between sessions
+- **Export/Import**: Backup and restore settings
 
 ## Features
 
