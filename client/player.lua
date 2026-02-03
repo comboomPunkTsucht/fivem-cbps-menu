@@ -5,30 +5,37 @@ local noclip = false
 local superJump = false
 local fastRun = false
 
+-- Local notification function to avoid dependency issues
+local function LocalShowNotification(msg)
+    SetNotificationTextEntry('STRING')
+    AddTextComponentString(msg)
+    DrawNotification(false, true)
+end
+
 function HealPlayer()
     local playerPed = PlayerPedId()
     SetEntityHealth(playerPed, 200)
-    ShowNotification('~g~Health restored!')
+    LocalShowNotification('~g~Health restored!')
 end
 
 function GiveArmor()
     local playerPed = PlayerPedId()
     SetPedArmour(playerPed, 100)
-    ShowNotification('~b~Armor restored!')
+    LocalShowNotification('~b~Armor restored!')
 end
 
 function ToggleGodMode()
     godMode = not godMode
     local playerPed = PlayerPedId()
     SetEntityInvincible(playerPed, godMode)
-    ShowNotification(godMode and '~g~God Mode: ON' or '~r~God Mode: OFF')
+    LocalShowNotification(godMode and '~g~God Mode: ON' or '~r~God Mode: OFF')
 end
 
 function ToggleInvisible()
     invisible = not invisible
     local playerPed = PlayerPedId()
     SetEntityVisible(playerPed, not invisible, 0)
-    ShowNotification(invisible and '~g~Invisible: ON' or '~r~Invisible: OFF')
+    LocalShowNotification(invisible and '~g~Invisible: ON' or '~r~Invisible: OFF')
 end
 
 function ToggleNoclip()
@@ -36,16 +43,20 @@ function ToggleNoclip()
     local playerPed = PlayerPedId()
     
     if noclip then
+        -- Store original states before enabling noclip
         SetEntityInvincible(playerPed, true)
         SetEntityVisible(playerPed, false, 0)
-        ShowNotification('~g~Noclip: ON')
+        SetEntityCollision(playerPed, false, false)
+        FreezeEntityPosition(playerPed, true)
+        LocalShowNotification('~g~Noclip: ON')
         
         Citizen.CreateThread(function()
             while noclip do
                 Citizen.Wait(0)
                 
+                -- Re-acquire playerPed in case it changed
+                playerPed = PlayerPedId()
                 local coords = GetEntityCoords(playerPed)
-                local heading = GetEntityHeading(playerPed)
                 local speed = 1.0
                 
                 if IsControlPressed(0, 21) then -- Shift
@@ -63,28 +74,36 @@ function ToggleNoclip()
                 end
                 
                 if IsControlPressed(0, 34) then -- A
+                    local heading = GetEntityHeading(playerPed)
                     SetEntityHeading(playerPed, heading + 3.0)
                 end
                 
                 if IsControlPressed(0, 35) then -- D
+                    local heading = GetEntityHeading(playerPed)
                     SetEntityHeading(playerPed, heading - 3.0)
                 end
                 
-                if IsControlPressed(0, 44) then -- Q
+                if IsControlPressed(0, 44) then -- Q (down)
                     coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, 0.0, -speed)
                     SetEntityCoords(playerPed, coords.x, coords.y, coords.z, 0, 0, 0, false)
                 end
                 
-                if IsControlPressed(0, 38) then -- E
+                if IsControlPressed(0, 38) then -- E (up)
                     coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, 0.0, speed)
                     SetEntityCoords(playerPed, coords.x, coords.y, coords.z, 0, 0, 0, false)
                 end
             end
         end)
     else
+        -- CRITICAL: Always restore player state when exiting noclip
+        -- Restore collision first
+        SetEntityCollision(playerPed, true, true)
+        FreezeEntityPosition(playerPed, false)
+        -- Restore invincibility based on godMode state
         SetEntityInvincible(playerPed, godMode)
+        -- Restore visibility based on invisible state
         SetEntityVisible(playerPed, not invisible, 0)
-        ShowNotification('~r~Noclip: OFF')
+        LocalShowNotification('~r~Noclip: OFF')
     end
 end
 
@@ -114,7 +133,7 @@ end
 
 function ToggleSuperJump()
     superJump = not superJump
-    ShowNotification(superJump and '~g~Super Jump: ON' or '~r~Super Jump: OFF')
+    LocalShowNotification(superJump and '~g~Super Jump: ON' or '~r~Super Jump: OFF')
     
     if superJump then
         Citizen.CreateThread(function()
@@ -128,7 +147,7 @@ end
 
 function ToggleFastRun()
     fastRun = not fastRun
-    ShowNotification(fastRun and '~g~Fast Run: ON' or '~r~Fast Run: OFF')
+    LocalShowNotification(fastRun and '~g~Fast Run: ON' or '~r~Fast Run: OFF')
     
     if fastRun then
         Citizen.CreateThread(function()
@@ -145,14 +164,14 @@ end
 function SuicidePlayer()
     local playerPed = PlayerPedId()
     SetEntityHealth(playerPed, 0)
-    ShowNotification('~r~You have committed suicide')
+    LocalShowNotification('~r~You have committed suicide')
 end
 
 function ClearWantedLevel()
     local playerId = PlayerId()
     SetPlayerWantedLevel(playerId, 0, false)
     SetPlayerWantedLevelNow(playerId, false)
-    ShowNotification('~g~Wanted level cleared')
+    LocalShowNotification('~g~Wanted level cleared')
 end
 
 function TeleportToWaypoint()
@@ -173,8 +192,40 @@ function TeleportToWaypoint()
         end
         
         SetEntityCoords(playerPed, coords.x, coords.y, groundZ, 0, 0, 0, false)
-        ShowNotification('~g~Teleported to waypoint')
+        LocalShowNotification('~g~Teleported to waypoint')
     else
-        ShowNotification('~r~No waypoint set')
+        LocalShowNotification('~r~No waypoint set')
     end
 end
+
+-- Emergency reset function to restore player state if stuck in noclip
+function ResetPlayerState()
+    local playerPed = PlayerPedId()
+    
+    -- Reset all toggles
+    noclip = false
+    godMode = false
+    invisible = false
+    superJump = false
+    fastRun = false
+    
+    -- Restore player to normal state
+    SetEntityCollision(playerPed, true, true)
+    FreezeEntityPosition(playerPed, false)
+    SetEntityInvincible(playerPed, false)
+    SetEntityVisible(playerPed, true, 0)
+    SetRunSprintMultiplierForPlayer(PlayerId(), 1.0)
+    
+    LocalShowNotification('~g~Player state reset!')
+end
+
+-- Register emergency reset command
+RegisterCommand('cbps_reset', function()
+    ResetPlayerState()
+end, false)
+
+-- Also register a keymapping for the reset command
+Citizen.CreateThread(function()
+    Citizen.Wait(2000) -- Wait for other scripts to load
+    RegisterKeyMapping('cbps_reset', 'Reset Player State (Emergency)', 'keyboard', 'F9')
+end)
