@@ -2,6 +2,139 @@
 
 All notable changes to CBPS Menu will be documented in this file.
 
+## [2.0.0] - 2026-02-03
+
+### Added - Major Update
+
+#### Character Creation & Management System
+- **Character Creator**: Randomize and customize player appearance
+- **Save Characters**: Save unlimited character presets with custom names
+- **Load Characters**: Switch between saved characters instantly
+- **Default Character**: Set a character to auto-load on player spawn
+- **Delete Characters**: Remove unwanted character presets
+- **Character Manager Menu**: New submenu with 6 character management options
+- **Persistent Storage**: All characters saved to client KVP storage
+
+#### Configurable Keybindings
+- **FiveM Integration**: Uses FiveM's native RegisterKeyMapping system
+- **Player Customizable**: Players can rebind keys in FiveM settings
+- **Config.Keybinds**: Configure default keybindings in config.lua
+- **Multiple Keybinds**: Menu open, voice range, noclip toggle
+- **Commands**: /cbps_menu, /cbps_voice_range, /cbps_noclip
+
+#### Controller Support
+- **Full Xbox/PlayStation Support**: Complete controller button mapping
+- **D-Pad Navigation**: Navigate menus with directional pad
+- **Button Configuration**: All buttons configurable in config.lua
+- **Controller Settings**: Navigate/Select/Back/OpenMenu controls
+- **Auto-Detection**: Controller input automatically detected
+
+#### Custom Theme Creator
+- **RGB Color Picker**: Create themes with custom RGB colors (0-255)
+- **Unlimited Themes**: Create as many custom themes as desired
+- **Theme Management**: Manage and delete custom themes
+- **Persistent Storage**: Custom themes saved to client KVP
+- **Live Preview**: Changes apply immediately
+- **Config.AllowCustomThemes**: Enable/disable custom theme creation
+
+#### Race Persistence System
+- **Save Race Templates**: Save races with checkpoints to JSON file
+- **Load Race Templates**: Load saved races after server restart
+- **Template Management**: View, load, and delete saved race templates
+- **JSON Storage**: Races saved to cbps_races.json
+- **Config.Race.SaveRaces**: Enable/disable race persistence
+- **Metadata**: Track creator, creation date, checkpoint count
+
+#### Comprehensive Settings Management
+- **Auto-Save**: All player preferences automatically saved
+- **11 Categories**: Theme, character, menu, voice, radio, player, vehicle, weapon, world, race, team, UI
+- **Client Storage**: Settings saved to client KVP (cbps_player_settings)
+- **Server Defaults**: Server-configurable default settings
+- **Settings Sync**: Auto-sync between sessions
+- **Export/Import**: Backup and restore settings
+- **Auto-Save Timer**: Save every 60 seconds
+- **On-Disconnect Save**: Save when player leaves
+
+#### Server Default Configuration
+- **server_defaults.json**: Server-side default settings file
+- **Admin Commands**: Configure server defaults via commands
+- **Auto-Sync**: Clients automatically receive server defaults
+- **Override Protection**: Server settings can enforce certain values
+- **Per-Category Defaults**: Set defaults for each settings category
+
+### Commands Added
+
+#### Player Commands
+- `/cbps_menu` - Open/close the menu (alternative to keybind)
+- `/cbps_voice_range` - Cycle through voice ranges
+- `/cbps_noclip` - Toggle noclip mode (if enabled in config)
+- `/cbps_settings_export` - Export all settings to console (F8)
+- `/cbps_settings_reset` - Reset all settings to defaults
+- `/cbps_settings_save` - Manually save settings
+
+#### Admin Commands
+- `/cbps_set_default <category> <key> <value>` - Set a server default setting
+- `/cbps_reset_defaults` - Reset server defaults to file
+
+### Files Added
+
+#### Client Scripts
+- `client/character.lua` - Character creation, save, load, delete system
+- `client/settings.lua` - Comprehensive player settings management
+
+#### Server Scripts
+- `server/settings.lua` - Server default settings management
+
+#### Documentation
+- `NEW_FEATURES.md` - Comprehensive documentation in German and English
+
+### Files Modified
+
+#### Configuration
+- `config.lua` - Added Keybinds, Controller, AllowCustomThemes sections
+- `fxmanifest.lua` - Added new script files
+
+#### Client Scripts
+- `client/main.lua` - RegisterKeyMapping, controller support, custom theme storage
+- `client/menu.lua` - Character Manager menu, theme creator, race templates
+
+#### Server Scripts
+- `server/race.lua` - Race persistence with save/load/delete functionality
+
+#### Documentation
+- `README.md` - Updated with v2.0 features and highlights
+
+### Storage Systems
+
+#### Client-Side (KVP)
+- `cbps_player_settings` - All player preferences and settings
+- `cbps_custom_themes` - Player-created custom themes
+- `cbps_saved_characters` - Character appearance presets
+- `cbps_current_theme` - Currently selected theme
+- `cbps_default_character` - Default character for auto-load
+
+#### Server-Side (JSON)
+- `server_defaults.json` - Server-configurable default settings
+- `cbps_races.json` - Saved race templates with checkpoints
+
+### Technical Improvements
+- FiveM native keybinding system integration
+- Efficient KVP storage for client preferences
+- JSON file persistence for server data
+- Auto-save with throttling (60 second intervals)
+- Deep merge algorithm for settings inheritance
+- Controller button abstraction layer
+- Resource-aware save on stop/disconnect
+
+### Configuration Options Added
+- `Config.Keybinds` - Keyboard and controller keybinding configuration
+- `Config.Controller` - Controller button mappings and navigation
+- `Config.AllowCustomThemes` - Enable/disable custom theme creation
+- `Config.Race.SaveRaces` - Enable/disable race persistence
+- `Config.Race.RaceSaveFile` - Filename for race template storage
+
+---
+
 ## [1.0.0] - 2026-02-03
 
 ### Added - Initial Release
@@ -137,21 +270,6 @@ All notable changes to CBPS Menu will be documented in this file.
 - LemonUI - Menu framework
 - pma-voice - Voice chat system
 - pma-radio - Radio communication system
-
-### Notes
-This is the initial release of CBPS Menu, providing a complete sandbox menu system for FiveM servers. The menu includes all major VMenu features plus modern additions like voice/radio control, team management, and a race system. Built with LemonUI for a native GTA-style interface with full theme customization.
-
-### Known Issues
-None - this is a fresh implementation
-
-### Future Considerations
-- Additional vehicle categories
-- More weapon options
-- Enhanced team features
-- Race leaderboards with persistence
-- Custom keybinds
-- Permission levels
-- Integration with ESX/QBCore frameworks
 
 ---
 
