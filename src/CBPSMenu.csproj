@@ -4,7 +4,7 @@
     <TargetFramework>net452</TargetFramework>
     <LangVersion>7.3</LangVersion>
     <OutputType>Library</OutputType>
-    <AssemblyName>CBPSMenu</AssemblyName>
+    <AssemblyName>CBPSMenu.net</AssemblyName>
     <RootNamespace>CBPSMenu</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

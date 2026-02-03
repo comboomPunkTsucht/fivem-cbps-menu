@@ -43,7 +43,10 @@ function ToggleNoclip()
     local playerPed = PlayerPedId()
     
     if noclip then
-        -- Store original states before enabling noclip
+        -- Enable noclip mode:
+        -- SetEntityCollision(false) - Prevents collision detection with world objects
+        -- FreezeEntityPosition(true) - Prevents physics/gravity from affecting the entity
+        -- Both are needed: collision prevents clipping through objects, freeze prevents falling
         SetEntityInvincible(playerPed, true)
         SetEntityVisible(playerPed, false, 0)
         SetEntityCollision(playerPed, false, false)

@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout repository
@@ -28,17 +30,17 @@ jobs:
       - name: Download LemonUI.FiveM
         run: |
           mkdir -p dist
-          curl -L -o lemonui.zip https://github.com/LemonUIbyLemon/LemonUI/releases/latest/download/LemonUI.FiveM.zip
+          curl -L -o lemonui.zip https://github.com/LemonUIbyLemon/LemonUI/releases/latest/download/LemonUI.zip
           unzip -o lemonui.zip -d lemonui_temp
-          cp lemonui_temp/LemonUI.FiveM.dll dist/
+          cp lemonui_temp/FiveM/LemonUI.FiveM.dll dist/
           rm -rf lemonui_temp lemonui.zip
 
       - name: Prepare release package
         run: |
           mkdir -p release/fivem-cbps-menu
           
-          # Copy compiled DLL
-          cp dist/CBPSMenu.dll release/fivem-cbps-menu/CBPSMenu.net.dll
+          # Copy compiled DLL (already named CBPSMenu.net.dll from the build)
+          cp dist/CBPSMenu.net.dll release/fivem-cbps-menu/
           
           # Copy LemonUI
           cp dist/LemonUI.FiveM.dll release/fivem-cbps-menu/
