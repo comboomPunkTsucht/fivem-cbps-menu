@@ -1,0 +1,107 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - release
+      - release/*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/CBPSMenu.csproj
+
+      - name: Build
+        run: dotnet build src/CBPSMenu.csproj -c Release --no-restore
+
+      - name: Download LemonUI.FiveM
+        run: |
+          mkdir -p dist
+          curl -L -o lemonui.zip https://github.com/LemonUIbyLemon/LemonUI/releases/latest/download/LemonUI.FiveM.zip
+          unzip -o lemonui.zip -d lemonui_temp
+          cp lemonui_temp/LemonUI.FiveM.dll dist/
+          rm -rf lemonui_temp lemonui.zip
+
+      - name: Prepare release package
+        run: |
+          mkdir -p release/fivem-cbps-menu
+          
+          # Copy compiled DLL
+          cp dist/CBPSMenu.dll release/fivem-cbps-menu/CBPSMenu.net.dll
+          
+          # Copy LemonUI
+          cp dist/LemonUI.FiveM.dll release/fivem-cbps-menu/
+          
+          # Copy Lua files
+          cp -r client release/fivem-cbps-menu/
+          cp -r server release/fivem-cbps-menu/
+          cp config.lua release/fivem-cbps-menu/
+          cp fxmanifest.lua release/fivem-cbps-menu/
+          
+          # Copy documentation
+          cp README.md release/fivem-cbps-menu/ || true
+          cp INSTALLATION.md release/fivem-cbps-menu/ || true
+          cp LICENSE release/fivem-cbps-menu/ || true
+          
+          # Create zip
+          cd release
+          zip -r ../fivem-cbps-menu.zip fivem-cbps-menu
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.date.outputs.date }}-${{ steps.sha.outputs.short }}
+          name: Release ${{ steps.date.outputs.date }} (${{ steps.sha.outputs.short }})
+          body: |
+            ## CBPS Menu Release
+            
+            **Build:** ${{ github.sha }}
+            **Date:** ${{ steps.date.outputs.date }}
+            
+            ### Installation
+            1. Extract `fivem-cbps-menu.zip` to your server's `resources` folder
+            2. Add `ensure fivem-cbps-menu` to your `server.cfg`
+            3. Make sure you have `pma-voice` and `pma-radio` installed (required dependencies)
+            
+            ### Dependencies
+            - [pma-voice](https://github.com/AvarianKnight/pma-voice)
+            - [pma-radio](https://github.com/AvarianKnight/pma-radio)
+            
+            ### Keybindings
+            - **F1** - Open Menu
+            - **F2** - Toggle Noclip
+            - **F9** - Reset Player State (emergency)
+            
+            ### Changes
+            ${{ github.event.head_commit.message }}
+          files: |
+            fivem-cbps-menu.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fivem-cbps-menu
+          path: release/fivem-cbps-menu/

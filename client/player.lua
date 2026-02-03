@@ -56,7 +56,6 @@ function ToggleNoclip()
                 
                 -- Re-acquire playerPed in case it changed
                 playerPed = PlayerPedId()
-                local coords = GetEntityCoords(playerPed)
                 local speed = 1.0
                 
                 if IsControlPressed(0, 21) then -- Shift
@@ -64,12 +63,12 @@ function ToggleNoclip()
                 end
                 
                 if IsControlPressed(0, 32) then -- W
-                    coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, speed, 0.0)
+                    local coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, speed, 0.0)
                     SetEntityCoords(playerPed, coords.x, coords.y, coords.z, 0, 0, 0, false)
                 end
                 
                 if IsControlPressed(0, 33) then -- S
-                    coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, -speed, 0.0)
+                    local coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, -speed, 0.0)
                     SetEntityCoords(playerPed, coords.x, coords.y, coords.z, 0, 0, 0, false)
                 end
                 
@@ -84,12 +83,12 @@ function ToggleNoclip()
                 end
                 
                 if IsControlPressed(0, 44) then -- Q (down)
-                    coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, 0.0, -speed)
+                    local coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, 0.0, -speed)
                     SetEntityCoords(playerPed, coords.x, coords.y, coords.z, 0, 0, 0, false)
                 end
                 
                 if IsControlPressed(0, 38) then -- E (up)
-                    coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, 0.0, speed)
+                    local coords = GetOffsetFromEntityInOrientation(playerPed, 0.0, 0.0, speed)
                     SetEntityCoords(playerPed, coords.x, coords.y, coords.z, 0, 0, 0, false)
                 end
             end
@@ -224,8 +223,5 @@ RegisterCommand('cbps_reset', function()
     ResetPlayerState()
 end, false)
 
--- Also register a keymapping for the reset command
-Citizen.CreateThread(function()
-    Citizen.Wait(2000) -- Wait for other scripts to load
-    RegisterKeyMapping('cbps_reset', 'Reset Player State (Emergency)', 'keyboard', 'F9')
-end)
+-- Register keymapping for the reset command
+RegisterKeyMapping('cbps_reset', 'Reset Player State (Emergency)', 'keyboard', 'F9')

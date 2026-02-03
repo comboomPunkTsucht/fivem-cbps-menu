@@ -19,25 +19,33 @@ local currentTheme = Config.DefaultTheme
 local customThemes = {} -- Store player's custom themes
 local lemonuiAvailable = false
 
--- Safely try to get lemonui exports
+-- Safely try to get lemonui exports with retry mechanism
 Citizen.CreateThread(function()
-    Citizen.Wait(500) -- Give lemonui time to load
+    local maxAttempts = 10
+    local attempt = 0
     
-    local success, result = pcall(function()
-        lemon = exports.lemonui
-        pool = lemon:CreatePool()
-        return true
-    end)
-    
-    if success and pool then
-        lemonuiAvailable = true
-        print('[CBPS Menu] LemonUI loaded successfully')
-    else
-        lemonuiAvailable = false
-        print('[CBPS Menu] WARNING: LemonUI not available - menu features disabled')
-        print('[CBPS Menu] Please ensure lemonui resource is installed and started')
-        ShowNotification('~r~CBPS Menu: LemonUI not available')
+    while attempt < maxAttempts do
+        attempt = attempt + 1
+        Citizen.Wait(500) -- Wait 500ms between attempts
+        
+        local success, result = pcall(function()
+            lemon = exports.lemonui
+            pool = lemon:CreatePool()
+            return true
+        end)
+        
+        if success and pool then
+            lemonuiAvailable = true
+            print('[CBPS Menu] LemonUI loaded successfully')
+            return
+        end
     end
+    
+    -- All attempts failed
+    lemonuiAvailable = false
+    print('[CBPS Menu] WARNING: LemonUI not available after ' .. maxAttempts .. ' attempts - menu features disabled')
+    print('[CBPS Menu] Please ensure lemonui resource is installed and started')
+    ShowNotification('~r~CBPS Menu: LemonUI not available')
 end)
 
 -- Register keybinds using FiveM's native keybinding system
