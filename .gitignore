@@ -26,7 +26,6 @@ luac.out
 *.exp
 
 # Shared objects (inc. Windows DLLs)
-*.dll
 *.so
 *.so.*
 *.dylib
@@ -39,3 +38,25 @@ luac.out
 *.x86_64
 *.hex
 
+# .NET build output
+dist/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+
+# NuGet
+packages/
+*.nupkg
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

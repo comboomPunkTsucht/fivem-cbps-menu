@@ -1,16 +1,65 @@
 -- Client Main Script using LemonUI
-local lemon = exports.lemonui
-local pool = lemon:CreatePool()
+
+-- IMPORTANT: Define ShowNotification first, before any code that might fail
+-- This ensures all client scripts can use it even if lemonui fails to load
+function ShowNotification(msg)
+    SetNotificationTextEntry('STRING')
+    AddTextComponentString(msg)
+    DrawNotification(false, true)
+end
+
+-- Export ShowNotification immediately
+exports('ShowNotification', ShowNotification)
+
+-- Try to initialize LemonUI with error handling
+local lemon = nil
+local pool = nil
 local mainMenu = nil
 local currentTheme = Config.DefaultTheme
 local customThemes = {} -- Store player's custom themes
+local lemonuiAvailable = false
+
+-- Safely try to get lemonui exports with retry mechanism
+Citizen.CreateThread(function()
+    local maxAttempts = 10
+    local attempt = 0
+    
+    while attempt < maxAttempts do
+        attempt = attempt + 1
+        Citizen.Wait(500) -- Wait 500ms between attempts
+        
+        local success, result = pcall(function()
+            lemon = exports.lemonui
+            pool = lemon:CreatePool()
+            return true
+        end)
+        
+        if success and pool then
+            lemonuiAvailable = true
+            print('[CBPS Menu] LemonUI loaded successfully')
+            return
+        end
+    end
+    
+    -- All attempts failed
+    lemonuiAvailable = false
+    print('[CBPS Menu] WARNING: LemonUI not available after ' .. maxAttempts .. ' attempts - menu features disabled')
+    print('[CBPS Menu] Please ensure lemonui resource is installed and started')
+    ShowNotification('~r~CBPS Menu: LemonUI not available')
+end)
 
 -- Register keybinds using FiveM's native keybinding system
 RegisterCommand('cbps_menu', function()
+    if not lemonuiAvailable or not pool then
+        ShowNotification('~r~Menu not available - LemonUI not loaded')
+        return
+    end
     if pool:AreAnyVisible() then
         pool:CloseAllMenus()
     else
-        mainMenu:Visible(true)
+        if mainMenu then
+            mainMenu:Visible(true)
+        end
     end
 end, false)
 
@@ -26,10 +75,10 @@ end, false)
 
 -- Initialize the menu
 Citizen.CreateThread(function()
-    -- Wait for LemonUI to be ready
-    Citizen.Wait(1000)
+    -- Wait for LemonUI initialization to complete
+    Citizen.Wait(1500)
     
-    -- Register key mappings
+    -- Register key mappings (these work even without lemonui)
     RegisterKeyMapping('cbps_menu', Config.Keybinds.OpenMenu.description, 'keyboard', Config.Keybinds.OpenMenu.key)
     RegisterKeyMapping('cbps_voice_range', Config.Keybinds.VoiceRange.description, 'keyboard', Config.Keybinds.VoiceRange.key)
     
@@ -37,31 +86,40 @@ Citizen.CreateThread(function()
         RegisterKeyMapping('cbps_noclip', Config.Keybinds.Noclip.description, 'keyboard', Config.Keybinds.Noclip.key)
     end
     
-    -- Create the main menu
-    CreateMainMenu()
-    
-    -- Load custom themes from storage
-    LoadCustomThemes()
-    
-    while true do
-        Citizen.Wait(0)
+    -- Only create menu if lemonui is available
+    if lemonuiAvailable then
+        -- Create the main menu
+        CreateMainMenu()
         
-        -- Process menu pool
-        pool:ProcessMenus()
-        
-        -- Controller support
-        if Config.Controller.Enabled then
-            HandleControllerInput()
+        -- Load custom themes from storage
+        LoadCustomThemes()
+    
+        while true do
+            Citizen.Wait(0)
+            
+            -- Process menu pool
+            pool:ProcessMenus()
+            
+            -- Controller support
+            if Config.Controller.Enabled then
+                HandleControllerInput()
+            end
         end
+    else
+        -- Even without lemonui, keep the thread alive for potential future recovery
+        print('[CBPS Menu] Menu loop not started - LemonUI unavailable')
     end
 end)
 
 -- Handle controller input for menu
 function HandleControllerInput()
+    if not lemonuiAvailable or not pool then return end
     if not pool:AreAnyVisible() then
         -- Check for controller menu open button
         if IsControlJustReleased(0, GetControllerButton(Config.Controller.OpenMenu)) then
-            mainMenu:Visible(true)
+            if mainMenu then
+                mainMenu:Visible(true)
+            end
         end
     end
 end
@@ -102,14 +160,16 @@ function GetKeyMapping(key)
 end
 
 function CreateMainMenu()
+    if not lemonuiAvailable or not lemon or not pool then return end
     mainMenu = lemon:CreateMenu(Config.MenuTitle, '~b~Main Menu')
     ApplyTheme(mainMenu)
     pool:AddMenu(mainMenu)
 end
 
 function ApplyTheme(menu)
+    if not menu then return end
     local theme = Config.Themes[currentTheme] or customThemes[currentTheme]
-    if theme then
+    if theme and menu.Banner then
         -- LemonUI will handle the theme colors based on banner settings
         menu.Banner:SetColor(theme.banner.r, theme.banner.g, theme.banner.b, theme.banner.a)
     end
@@ -121,7 +181,9 @@ function ChangeTheme(themeName)
         currentTheme = themeName
         ShowNotification('~g~Theme changed to: ' .. theme.name)
         -- Refresh all menus with new theme
-        pool:RefreshIndex()
+        if pool then
+            pool:RefreshIndex()
+        end
         -- Save theme preference
         SaveThemePreference(themeName)
     end
@@ -161,15 +223,7 @@ function LoadThemePreference()
     end
 end
 
--- Notifications
-function ShowNotification(msg)
-    SetNotificationTextEntry('STRING')
-    AddTextComponentString(msg)
-    DrawNotification(false, true)
-end
-
--- Export functions
-exports('ShowNotification', ShowNotification)
+-- Export functions (ShowNotification already exported at top of file)
 exports('GetMenuPool', function() return pool end)
 exports('GetMainMenu', function() return mainMenu end)
 exports('ApplyTheme', ApplyTheme)
@@ -177,3 +231,4 @@ exports('ChangeTheme', ChangeTheme)
 exports('GetCurrentTheme', function() return currentTheme end)
 exports('AddCustomTheme', AddCustomTheme)
 exports('GetCustomThemes', function() return customThemes end)
+exports('IsLemonUIAvailable', function() return lemonuiAvailable end)

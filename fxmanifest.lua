@@ -5,19 +5,15 @@ author 'CBPS Menu'
 description 'A comprehensive FiveM menu with VMenu functions, pma-voice/radio control, team management, and race features'
 version '1.0.0'
 
+-- C# Menu using LemonUI
 client_scripts {
-    '@lemonui/LemonUI.net.dll',
+    'CBPSMenu.net.dll'
+}
+
+-- Lua support scripts (for features that work alongside the C# menu)
+client_scripts {
     'config.lua',
-    'client/main.lua',
-    'client/settings.lua',
-    'client/menu.lua',
-    'client/player.lua',
-    'client/vehicle.lua',
-    'client/weapons.lua',
-    'client/voice.lua',
-    'client/team.lua',
-    'client/race.lua',
-    'client/character.lua'
+    'client/voice.lua'
 }
 
 server_scripts {
@@ -32,8 +28,13 @@ server_scripts {
     'server/race.lua'
 }
 
+-- LemonUI library
+files {
+    'LemonUI.FiveM.dll'
+}
+
+-- Required dependencies
 dependencies {
-    'lemonui',
     'pma-voice',
     'pma-radio'
 }

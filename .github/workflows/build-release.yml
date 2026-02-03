@@ -1,0 +1,132 @@
+name: Build and Release
+
+on:
+  # Trigger on PRs merged to release branch
+  pull_request:
+    types: [closed]
+    branches:
+      - release
+      - release/*
+  # Also allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Only run if PR was merged (not just closed) or if manually triggered
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/CBPSMenu.csproj
+
+      - name: Build
+        run: dotnet build src/CBPSMenu.csproj -c Release --no-restore
+
+      - name: Download LemonUI.FiveM
+        run: |
+          mkdir -p dist
+          curl -L -o lemonui.zip https://github.com/LemonUIbyLemon/LemonUI/releases/latest/download/LemonUI.zip
+          unzip -o lemonui.zip -d lemonui_temp
+          cp lemonui_temp/FiveM/LemonUI.FiveM.dll dist/
+          rm -rf lemonui_temp lemonui.zip
+
+      - name: Prepare release package
+        run: |
+          mkdir -p release/fivem-cbps-menu
+          
+          # Copy compiled DLL (already named CBPSMenu.net.dll from the build)
+          cp dist/CBPSMenu.net.dll release/fivem-cbps-menu/
+          
+          # Copy LemonUI
+          cp dist/LemonUI.FiveM.dll release/fivem-cbps-menu/
+          
+          # Copy Lua files
+          cp -r client release/fivem-cbps-menu/
+          cp -r server release/fivem-cbps-menu/
+          cp config.lua release/fivem-cbps-menu/
+          cp fxmanifest.lua release/fivem-cbps-menu/
+          
+          # Copy documentation
+          cp README.md release/fivem-cbps-menu/ || true
+          cp INSTALLATION.md release/fivem-cbps-menu/ || true
+          cp LICENSE release/fivem-cbps-menu/ || true
+          
+          # Create zip
+          cd release
+          zip -r ../fivem-cbps-menu.zip fivem-cbps-menu
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+
+      - name: Get timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +'%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: Determine version
+        id: version
+        run: |
+          BASE_VERSION="${{ steps.date.outputs.date }}"
+          # Check if a release with this date already exists
+          if gh release view "v${BASE_VERSION}" > /dev/null 2>&1; then
+            # Version exists, add timestamp
+            echo "version=${BASE_VERSION}-${{ steps.timestamp.outputs.timestamp }}" >> $GITHUB_OUTPUT
+          else
+            # Version doesn't exist, use base version
+            echo "version=${BASE_VERSION}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## CBPS Menu Release
+            
+            **Version:** ${{ steps.version.outputs.version }}
+            **Build:** ${{ github.sha }}
+            
+            ### Installation
+            1. Extract `fivem-cbps-menu.zip` to your server's `resources` folder
+            2. Add `ensure fivem-cbps-menu` to your `server.cfg`
+            3. Make sure you have `pma-voice` and `pma-radio` installed (required dependencies)
+            
+            ### Dependencies
+            - [pma-voice](https://github.com/AvarianKnight/pma-voice)
+            - [pma-radio](https://github.com/AvarianKnight/pma-radio)
+            
+            ### Keybindings
+            - **F1** - Open Menu
+            - **F2** - Toggle Noclip
+            - **F9** - Reset Player State (emergency)
+            
+            ### Changes
+            ${{ github.event.pull_request.title || 'Manual build' }}
+            
+            ${{ github.event.pull_request.body || '' }}
+          files: |
+            fivem-cbps-menu.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fivem-cbps-menu
+          path: release/fivem-cbps-menu/
