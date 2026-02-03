@@ -1,7 +1,7 @@
 fx_version 'cerulean'
 game 'gta5'
 
-author 'CBPS Menu'
+author 'comboom.sucht'
 description 'A vMenu-style FiveM menu using LemonUI with Nord theme, pma-voice/radio control, team management, and race features'
 version '1.0.0'
 
