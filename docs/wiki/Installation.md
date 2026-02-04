@@ -6,16 +6,16 @@ Follow these steps to install and configure **comboom.sucht menu** on your FiveM
 
 Before installing, ensure your server has the following dependencies running:
 
-1.  **[pma-voice](https://github.com/AvarianKnight/pma-voice)**
-    _Required for voice proximity features._
-2.  **[pma-radio](https://github.com/AvarianKnight/pma-radio)**
-    _Required for radio frequency management._
+1. **[pma-voice](https://github.com/AvarianKnight/pma-voice)**
+   _Required for voice proximity features._
+2. **[pma-radio](https://github.com/AvarianKnight/pma-radio)**
+   _Required for radio frequency management._
 
 ## 🛠️ Installation Steps
 
 ### 1. Download Release
 
-Download the latest `fivem-cbps-menu.zip` from the [Releases](https://github.com/your-repo/releases) page.
+Download the latest `fivem-cbps-menu.zip` from the [Releases](https://github.com/comboomPunkTsucht/fivem-cbps-menu/releases/latest) page.
 
 ### 2. Extract Files
 
