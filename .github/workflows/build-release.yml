@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,10 +28,14 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore src/CBPSMenu.csproj
+        run: |
+          dotnet restore src/CBPSMenu.csproj
+          dotnet restore src/CBPSMenu.Server/CBPSMenu.Server.csproj
 
       - name: Build
-        run: dotnet build src/CBPSMenu.csproj -c Release --no-restore
+        run: |
+          dotnet build src/CBPSMenu.csproj -c Release --no-restore
+          dotnet build src/CBPSMenu.Server/CBPSMenu.Server.csproj -c Release --no-restore
 
       - name: Download LemonUI.FiveM
         run: |
@@ -44,24 +48,23 @@ jobs:
       - name: Prepare release package
         run: |
           mkdir -p release/fivem-cbps-menu
-          
-          # Copy compiled DLL (already named CBPSMenu.net.dll from the build)
+
+          # Copy compiled DLLs
           cp dist/CBPSMenu.net.dll release/fivem-cbps-menu/
-          
+          cp dist/CBPSMenu.Server.net.dll release/fivem-cbps-menu/
+
           # Copy LemonUI
           cp dist/LemonUI.FiveM.dll release/fivem-cbps-menu/
-          
-          # Copy Lua files
-          cp -r client release/fivem-cbps-menu/
-          cp -r server release/fivem-cbps-menu/
+
+          # Copy Config and Manifest
           cp config.lua release/fivem-cbps-menu/
           cp fxmanifest.lua release/fivem-cbps-menu/
-          
+
           # Copy documentation
           cp README.md release/fivem-cbps-menu/ || true
           cp INSTALLATION.md release/fivem-cbps-menu/ || true
           cp LICENSE release/fivem-cbps-menu/ || true
-          
+
           # Create zip
           cd release
           zip -r ../fivem-cbps-menu.zip fivem-cbps-menu
@@ -96,27 +99,27 @@ jobs:
           name: Release ${{ steps.version.outputs.version }}
           body: |
             ## CBPS Menu Release
-            
+
             **Version:** ${{ steps.version.outputs.version }}
             **Build:** ${{ github.sha }}
-            
+
             ### Installation
             1. Extract `fivem-cbps-menu.zip` to your server's `resources` folder
             2. Add `ensure fivem-cbps-menu` to your `server.cfg`
             3. Make sure you have `pma-voice` and `pma-radio` installed (required dependencies)
-            
+
             ### Dependencies
             - [pma-voice](https://github.com/AvarianKnight/pma-voice)
             - [pma-radio](https://github.com/AvarianKnight/pma-radio)
-            
+
             ### Keybindings
             - **F1** - Open Menu
             - **F2** - Toggle Noclip
             - **F9** - Reset Player State (emergency)
-            
+
             ### Changes
             ${{ github.event.pull_request.title || 'Manual build' }}
-            
+
             ${{ github.event.pull_request.body || '' }}
           files: |
             fivem-cbps-menu.zip

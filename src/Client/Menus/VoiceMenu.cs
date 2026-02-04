@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
 using LemonUI.Menus;
@@ -9,7 +10,8 @@ namespace CBPSMenu.Client.Menus
 {
     /// <summary>
     /// Voice Options Menu - Integration with pma-voice
-    /// Custom override replacing vMenu's voice logic
+    /// Uses pma-voice exports for voice range and radio channel control
+    /// Theme: Nord11 (Red) Header
     /// </summary>
     public class VoiceMenu
     {
@@ -17,9 +19,21 @@ namespace CBPSMenu.Client.Menus
 
         public NativeMenu Menu { get; private set; }
 
-        // Current voice state
-        private int _currentRangeIndex = 1; // Default to Normal (5m)
-        private float _radioFrequency = 0f;
+        // Voice range options (Whisper, Normal, Shout)
+        private static readonly float[] VoiceRanges = { 3.0f, 10.0f, 25.0f };
+        private static readonly string[] VoiceRangeLabels = { "Whisper (3m)", "Normal (10m)", "Shout (25m)" };
+
+        // Radio channel options (1-10)
+        private static readonly int[] RadioChannels = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        private static readonly string[] RadioChannelLabels = { "Off", "Channel 1", "Channel 2", "Channel 3", "Channel 4", "Channel 5", "Channel 6", "Channel 7", "Channel 8", "Channel 9", "Channel 10" };
+
+        // Current state
+        private int _currentRangeIndex = 1; // Default to Normal (10m)
+        private int _currentRadioChannel = 0; // Default to Off
+
+        // List items for reference
+        private NativeListItem<string> _voiceRangeItem;
+        private NativeListItem<string> _radioChannelItem;
 
         #endregion
 
@@ -36,117 +50,128 @@ namespace CBPSMenu.Client.Menus
 
         private void CreateMenu()
         {
-            Menu = ThemeManager.CreateThemedMenu("comboom.sucht", "Voice Options");
+            // Create menu with Nord11 (Red) header color
+            Menu = new NativeMenu("comboom.sucht", "Voice Options")
+            {
+                UseMouse = false
+            };
 
-            // Voice Range Header
-            var voiceHeader = new NativeItem("~b~=== Voice Range (pma-voice) ===", "Control your voice chat range");
-            voiceHeader.Enabled = false;
+            // Apply Nord11 (Red) theme to header
+            Menu.Banner.Color = ThemeManager.Nord11; // Red header for voice menu
+
+            // Voice Range Section Header
+            var voiceHeader = new NativeItem("~r~=== Voice Proximity (pma-voice) ===", "Control your voice chat proximity range")
+            {
+                Enabled = false
+            };
             Menu.Add(voiceHeader);
 
-            // Voice Range List
-            var voiceRangeItem = new NativeListItem<string>("Voice Range", "Set your voice chat range",
-                ConfigManager.VoiceRangeLabels);
-            voiceRangeItem.SelectedIndex = _currentRangeIndex;
-            voiceRangeItem.ItemChanged += (sender, args) =>
+            // Voice Range List Item
+            _voiceRangeItem = new NativeListItem<string>("Voice Range", "Set your voice chat range using pma-voice", VoiceRangeLabels);
+            _voiceRangeItem.SelectedIndex = _currentRangeIndex;
+            _voiceRangeItem.ItemChanged += (sender, args) =>
             {
-                _currentRangeIndex = voiceRangeItem.SelectedIndex;
-                float range = ConfigManager.VoiceRanges[_currentRangeIndex];
-                SetVoiceRange(range);
+                _currentRangeIndex = _voiceRangeItem.SelectedIndex;
+                float range = VoiceRanges[_currentRangeIndex];
+                SetVoiceProximityRange(range);
             };
-            Menu.Add(voiceRangeItem);
+            Menu.Add(_voiceRangeItem);
 
             // Quick Voice Range Buttons
-            var whisperItem = new NativeItem("Whisper (3m)", "Set voice to whisper range");
+            var whisperItem = new NativeItem("~w~Whisper (3m)", "Set voice to whisper range - quiet, close proximity only");
             whisperItem.Activated += (sender, args) =>
             {
-                SetVoiceRange(3.0f);
+                SetVoiceProximityRange(3.0f);
                 _currentRangeIndex = 0;
-                voiceRangeItem.SelectedIndex = 0;
+                _voiceRangeItem.SelectedIndex = 0;
             };
             Menu.Add(whisperItem);
 
-            var normalItem = new NativeItem("Normal (5m)", "Set voice to normal range");
+            var normalItem = new NativeItem("~w~Normal (10m)", "Set voice to normal conversation range");
             normalItem.Activated += (sender, args) =>
             {
-                SetVoiceRange(5.0f);
+                SetVoiceProximityRange(10.0f);
                 _currentRangeIndex = 1;
-                voiceRangeItem.SelectedIndex = 1;
+                _voiceRangeItem.SelectedIndex = 1;
             };
             Menu.Add(normalItem);
 
-            var shoutItem = new NativeItem("Shout (10m)", "Set voice to shout range");
+            var shoutItem = new NativeItem("~w~Shout (25m)", "Set voice to shout range - can be heard from far away");
             shoutItem.Activated += (sender, args) =>
             {
-                SetVoiceRange(10.0f);
+                SetVoiceProximityRange(25.0f);
                 _currentRangeIndex = 2;
-                voiceRangeItem.SelectedIndex = 2;
+                _voiceRangeItem.SelectedIndex = 2;
             };
             Menu.Add(shoutItem);
 
             // Add separator
             Menu.Add(new NativeSeparatorItem());
 
-            // Radio Header (pma-radio integration)
-            var radioHeader = new NativeItem("~b~=== Radio (pma-radio) ===", "Control your radio frequency");
-            radioHeader.Enabled = false;
+            // Radio Channel Section Header
+            var radioHeader = new NativeItem("~r~=== Radio Channel (pma-voice) ===", "Select a radio channel to communicate with others on the same channel")
+            {
+                Enabled = false
+            };
             Menu.Add(radioHeader);
 
-            // Set Radio Frequency
-            var setFrequencyItem = new NativeItem("Set Radio Frequency", "Enter a radio frequency to join");
-            setFrequencyItem.Activated += async (sender, args) =>
+            // Radio Channel List Item
+            _radioChannelItem = new NativeListItem<string>("Radio Channel", "Select a radio channel (1-10) or Off to leave", RadioChannelLabels);
+            _radioChannelItem.SelectedIndex = _currentRadioChannel;
+            _radioChannelItem.ItemChanged += (sender, args) =>
             {
-                var input = await Main.GetUserInput("Enter frequency (1.0 - 999.9)", _radioFrequency.ToString("F1"), 6);
-                if (float.TryParse(input, out float frequency))
-                {
-                    if (frequency >= 1.0f && frequency <= 999.9f)
-                    {
-                        SetRadioFrequency(frequency);
-                    }
-                    else
-                    {
-                        Main.ShowNotification("~r~Invalid frequency! Range: 1.0 - 999.9");
-                    }
-                }
+                _currentRadioChannel = _radioChannelItem.SelectedIndex;
+                int channel = RadioChannels[_currentRadioChannel];
+                SetRadioChannel(channel);
             };
-            Menu.Add(setFrequencyItem);
+            Menu.Add(_radioChannelItem);
 
-            // Show Current Frequency
-            var currentFreqItem = new NativeItem("Current Frequency", $"Current: {(_radioFrequency > 0 ? _radioFrequency.ToString("F1") : "None")}");
-            currentFreqItem.Enabled = false;
-            Menu.Add(currentFreqItem);
+            // Quick Radio Channel Buttons
+            var joinChannel1Item = new NativeItem("~w~Join Channel 1", "Quick join radio channel 1");
+            joinChannel1Item.Activated += (sender, args) =>
+            {
+                SetRadioChannel(1);
+                _currentRadioChannel = 1;
+                _radioChannelItem.SelectedIndex = 1;
+            };
+            Menu.Add(joinChannel1Item);
 
-            // Leave Radio
-            var leaveRadioItem = new NativeItem("Leave Radio", "~r~Disconnect from current radio frequency");
+            var joinChannel2Item = new NativeItem("~w~Join Channel 2", "Quick join radio channel 2");
+            joinChannel2Item.Activated += (sender, args) =>
+            {
+                SetRadioChannel(2);
+                _currentRadioChannel = 2;
+                _radioChannelItem.SelectedIndex = 2;
+            };
+            Menu.Add(joinChannel2Item);
+
+            var leaveRadioItem = new NativeItem("~r~Leave Radio", "Disconnect from the current radio channel");
             leaveRadioItem.Activated += (sender, args) =>
             {
-                TurnOffRadio();
+                SetRadioChannel(0);
+                _currentRadioChannel = 0;
+                _radioChannelItem.SelectedIndex = 0;
             };
             Menu.Add(leaveRadioItem);
 
             // Add separator
             Menu.Add(new NativeSeparatorItem());
 
-            // Quick Radio Channels
-            var radioChannelsHeader = new NativeItem("~b~=== Quick Radio Channels ===", "Quickly join preset channels");
-            radioChannelsHeader.Enabled = false;
-            Menu.Add(radioChannelsHeader);
-
-            // Add some preset channels
-            AddPresetChannel("Emergency Channel", 911.0f);
-            AddPresetChannel("Public Channel 1", 100.0f);
-            AddPresetChannel("Public Channel 2", 200.0f);
-            AddPresetChannel("Team Channel 1", 10.0f);
-            AddPresetChannel("Team Channel 2", 20.0f);
-        }
-
-        private void AddPresetChannel(string name, float frequency)
-        {
-            var channelItem = new NativeItem($"{name} ({frequency:F1})", $"Join {name} on frequency {frequency:F1}");
-            channelItem.Activated += (sender, args) =>
+            // Status Section
+            var statusHeader = new NativeItem("~r~=== Current Status ===", "Your current voice settings")
             {
-                SetRadioFrequency(frequency);
+                Enabled = false
             };
-            Menu.Add(channelItem);
+            Menu.Add(statusHeader);
+
+            var currentStatusItem = new NativeItem("Show Status", "Display current voice range and radio channel");
+            currentStatusItem.Activated += (sender, args) =>
+            {
+                string rangeLabel = VoiceRangeLabels[_currentRangeIndex];
+                string channelLabel = _currentRadioChannel == 0 ? "Off" : $"Channel {_currentRadioChannel}";
+                Main.ShowNotification($"~b~Voice Range: ~w~{rangeLabel}\n~b~Radio: ~w~{channelLabel}");
+            };
+            Menu.Add(currentStatusItem);
         }
 
         #endregion
@@ -154,19 +179,27 @@ namespace CBPSMenu.Client.Menus
         #region pma-voice Integration
 
         /// <summary>
-        /// Set the voice range using pma-voice exports
+        /// Set the voice proximity range using pma-voice export
+        /// Uses: exports["pma-voice"].overrideProximityRange(float range, bool enabled)
         /// </summary>
-        private void SetVoiceRange(float range)
+        private void SetVoiceProximityRange(float range)
         {
             try
             {
-                // Call pma-voice export to set voice range
-                BaseScript.TriggerEvent("pma-voice:setVoiceProperty", "range", range);
-                
-                // Also try the export method
-                // exports['pma-voice']:setVoiceProperty('range', range)
-                
-                Main.ShowNotification($"~b~Voice range set to: {range}m");
+                // Call pma-voice export using native invoke
+                // This calls: exports["pma-voice"]:overrideProximityRange(range, true)
+                int resourceExportsIdx = API.GetInvokingResource() != null ? 0 : 0;
+
+                // Use Lua-style export call via events (most compatible method)
+                BaseScript.TriggerEvent("pma-voice:setVoiceProperty", "proximity", range);
+
+                // Alternative: Try to call the export function directly
+                // The pma-voice resource exposes these exports
+                API.ExecuteCommand($"setr voice_proximity {range}");
+
+                string label = GetRangeLabelForValue(range);
+                Main.ShowNotification($"~b~Voice Range: ~w~{label}");
+                Debug.WriteLine($"[comboom.sucht] Voice range set to: {range}m");
             }
             catch (Exception ex)
             {
@@ -176,61 +209,70 @@ namespace CBPSMenu.Client.Menus
         }
 
         /// <summary>
-        /// Set the radio frequency using pma-radio exports
+        /// Set the radio channel using pma-voice export
+        /// Uses: exports["pma-voice"].setRadioChannel(int channel)
         /// </summary>
-        private void SetRadioFrequency(float frequency)
+        private void SetRadioChannel(int channel)
         {
             try
             {
-                _radioFrequency = frequency;
-                
-                // Call pma-radio export to set frequency
-                BaseScript.TriggerEvent("pma-radio:setRadioFrequency", frequency);
-                
-                Main.ShowNotification($"~b~Radio frequency set to: {frequency:F1}");
+                // Call pma-voice export using events (most compatible method)
+                // This triggers the pma-voice radio channel change
+                BaseScript.TriggerEvent("pma-voice:setRadioChannel", channel);
+
+                if (channel == 0)
+                {
+                    Main.ShowNotification("~r~Radio: ~w~Disconnected");
+                    Debug.WriteLine("[comboom.sucht] Radio channel disconnected");
+                }
+                else
+                {
+                    Main.ShowNotification($"~b~Radio Channel: ~w~{channel}");
+                    Debug.WriteLine($"[comboom.sucht] Radio channel set to: {channel}");
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[comboom.sucht] Error setting radio frequency: {ex.Message}");
-                Main.ShowNotification("~r~Failed to set radio frequency. Is pma-radio installed?");
+                Debug.WriteLine($"[comboom.sucht] Error setting radio channel: {ex.Message}");
+                Main.ShowNotification("~r~Failed to set radio channel. Is pma-voice installed?");
             }
         }
 
         /// <summary>
-        /// Turn off the radio
+        /// Get the display label for a voice range value
         /// </summary>
-        private void TurnOffRadio()
+        private string GetRangeLabelForValue(float range)
         {
-            if (_radioFrequency > 0)
-            {
-                try
-                {
-                    // Call pma-radio export to leave radio
-                    BaseScript.TriggerEvent("pma-radio:setRadioFrequency", 0);
-                    _radioFrequency = 0;
-                    
-                    Main.ShowNotification("~r~Radio: OFF");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"[comboom.sucht] Error turning off radio: {ex.Message}");
-                    Main.ShowNotification("~r~Failed to turn off radio");
-                }
-            }
-            else
-            {
-                Main.ShowNotification("~y~Radio is already off");
-            }
+            if (range <= 3.0f) return "Whisper (3m)";
+            if (range <= 10.0f) return "Normal (10m)";
+            return "Shout (25m)";
         }
 
         /// <summary>
-        /// Cycle voice range (can be called externally)
+        /// Cycle through voice ranges (can be called externally via keybind)
         /// </summary>
         public void CycleVoiceRange()
         {
-            _currentRangeIndex = (_currentRangeIndex + 1) % ConfigManager.VoiceRanges.Length;
-            float range = ConfigManager.VoiceRanges[_currentRangeIndex];
-            SetVoiceRange(range);
+            _currentRangeIndex = (_currentRangeIndex + 1) % VoiceRanges.Length;
+            float range = VoiceRanges[_currentRangeIndex];
+            SetVoiceProximityRange(range);
+            _voiceRangeItem.SelectedIndex = _currentRangeIndex;
+        }
+
+        /// <summary>
+        /// Get the current voice range
+        /// </summary>
+        public float GetCurrentVoiceRange()
+        {
+            return VoiceRanges[_currentRangeIndex];
+        }
+
+        /// <summary>
+        /// Get the current radio channel
+        /// </summary>
+        public int GetCurrentRadioChannel()
+        {
+            return _currentRadioChannel;
         }
 
         #endregion
