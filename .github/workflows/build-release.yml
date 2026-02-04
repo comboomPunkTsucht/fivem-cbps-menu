@@ -50,9 +50,9 @@ jobs:
           sed -i "s/^version '.*'/version '${{ steps.version.outputs.version }}'/" fxmanifest.lua
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '9.x.x'
 
       - name: Restore dependencies
         run: |
@@ -94,7 +94,7 @@ jobs:
           zip -r ../fivem-cbps-menu.zip fivem-cbps-menu
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release ${{ steps.version.outputs.version }}
