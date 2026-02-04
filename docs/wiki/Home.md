@@ -6,9 +6,9 @@ Welcome to the official documentation for **comboom.sucht menu**, the premium ad
 
 - **[Installation Guide](Installation)**: Get started with setting up the menu.
 - **[Features Overview](Features)**: Full breakdown of available tools.
-- **[Releases](https://github.com/your-repo/releases)**: Download the latest version.
+- **[Releases](https://github.com/comboomPunkTsucht/fivem-cbps-menu/releases/latest)**: Download the latest version.
 - **[Race Creator Guide](Guide-Race-Creator)**: Learn how to build and save custom race tracks.
-- **[Radio & Voice Guide](Guide-Radio-Voice)**: Master the communication tools.
+- **[Radio &amp; Voice Guide](Guide-Radio-Voice)**: Master the communication tools.
 
 ## 🎨 The Nord Philosophy
 
