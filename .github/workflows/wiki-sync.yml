@@ -1,0 +1,26 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/wiki/**'
+  workflow_dispatch:
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Sync Wiki
+        uses: Andrew-Chen-Wang/github-wiki-action@v4
+        with:
+          # The wiki directory
+          path: docs/wiki
+          # The wiki repository
+          wiki-github-token: ${{ secrets.GITHUB_TOKEN }}
+          wiki-push-token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Wiki from Main Repo"
