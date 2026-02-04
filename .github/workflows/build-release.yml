@@ -84,7 +84,7 @@ jobs:
           cp dist/LemonUI.FiveM.dll release/fivem-cbps-menu/
 
           # Copy Config and Manifest (Manifest has been updated by sed)
-          cp config.lua release/fivem-cbps-menu/
+          cp config.json release/fivem-cbps-menu/
           cp fxmanifest.lua release/fivem-cbps-menu/
 
           # Copy documentation - UPDATED: Point to Wiki docs if local MDs are missing

@@ -17,7 +17,8 @@ server_scripts {
 -- LemonUI library and Newtonsoft.Json for race system
 files {
     'LemonUI.FiveM.dll',
-    'Newtonsoft.Json.dll'
+    'Newtonsoft.Json.dll',
+    'config.json'
 }
 
 -- Required dependencies
