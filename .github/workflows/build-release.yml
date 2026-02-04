@@ -43,20 +43,22 @@ jobs:
 
           # Check if running on main branch
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            SUFFIX="-pre"
+            # Pre-release: ALWAYS include timestamp to ensure uniqueness per commit
+            # Format: YYYY.MM.DD-HHMMSS-pre
+            echo "version=${BASE_VERSION}-${{ steps.timestamp.outputs.timestamp }}-pre" >> $GITHUB_OUTPUT
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
           else
-            SUFFIX=""
+            # Stable release
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
-          fi
 
-          # Check if a release with this date already exists
-          if gh release view "v${BASE_VERSION}" > /dev/null 2>&1; then
-            # Version exists, add timestamp
-            echo "version=${BASE_VERSION}-${{ steps.timestamp.outputs.timestamp }}${SUFFIX}" >> $GITHUB_OUTPUT
-          else
-            # Version doesn't exist, use base version
-            echo "version=${BASE_VERSION}${SUFFIX}" >> $GITHUB_OUTPUT
+            # Check if a release with this date already exists
+            if gh release view "v${BASE_VERSION}" > /dev/null 2>&1; then
+              # Version exists, add timestamp
+              echo "version=${BASE_VERSION}-${{ steps.timestamp.outputs.timestamp }}" >> $GITHUB_OUTPUT
+            else
+              # Version doesn't exist, use base version
+              echo "version=${BASE_VERSION}" >> $GITHUB_OUTPUT
+            fi
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
