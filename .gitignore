@@ -45,6 +45,11 @@ obj/
 *.user
 *.suo
 *.cache
+release/
+*.zip
+*.dll
+*.pdb
+*.xml
 
 # NuGet
 packages/
