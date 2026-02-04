@@ -64,13 +64,7 @@ jobs:
           dotnet build src/CBPSMenu.csproj -c Release --no-restore
           dotnet build src/CBPSMenu.Server/CBPSMenu.Server.csproj -c Release --no-restore
 
-      - name: Download LemonUI.FiveM
-        run: |
-          mkdir -p dist
-          curl -L -o lemonui.zip https://github.com/LemonUIbyLemon/LemonUI/releases/latest/download/LemonUI.zip
-          unzip -o lemonui.zip -d lemonui_temp
-          cp lemonui_temp/FiveM/LemonUI.FiveM.dll dist/
-          rm -rf lemonui_temp lemonui.zip
+
 
       - name: Prepare release package
         run: |
