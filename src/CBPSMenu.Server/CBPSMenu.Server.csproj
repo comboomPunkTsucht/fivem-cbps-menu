@@ -33,4 +33,9 @@
     <Reference Include="System.Core" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="cp &quot;$(TargetDir)$(TargetName).dll&quot; &quot;$(ProjectDir)../../$(TargetName).dll&quot;" />
+    <Exec Command="cp &quot;$(TargetDir)Newtonsoft.Json.dll&quot; &quot;$(ProjectDir)../../Newtonsoft.Json.dll&quot;" />
+  </Target>
+
 </Project>
