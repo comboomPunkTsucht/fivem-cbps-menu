@@ -83,6 +83,9 @@ jobs:
           # Copy LemonUI
           cp dist/LemonUI.FiveM.dll release/fivem-cbps-menu/
 
+          # Copy Dependencies
+          cp dist/Newtonsoft.Json.dll release/fivem-cbps-menu/
+
           # Copy Config and Manifest (Manifest has been updated by sed)
           cp config.json release/fivem-cbps-menu/
           cp fxmanifest.lua release/fivem-cbps-menu/
