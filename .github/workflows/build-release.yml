@@ -19,7 +19,7 @@ on:
 jobs:
   build:
     # Only run if PR was merged (not just closed) or if manually triggered
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
