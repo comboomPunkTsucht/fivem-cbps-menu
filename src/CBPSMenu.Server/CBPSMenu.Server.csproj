@@ -4,26 +4,32 @@
     <TargetFramework>net452</TargetFramework>
     <LangVersion>7.3</LangVersion>
     <OutputType>Library</OutputType>
-    <AssemblyName>CBPSMenu.net</AssemblyName>
-    <RootNamespace>CBPSMenu</RootNamespace>
+    <AssemblyName>CBPSMenu.Server.net</AssemblyName>
+    <RootNamespace>CBPSMenu.Server</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputPath>../dist/</OutputPath>
+    <OutputPath>../../dist/</OutputPath>
+    <DefineConstants>SERVER</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Server\**" />
-    <Compile Remove="CBPSMenu.Server\**" />
+    <Compile Include="..\Shared\**\*.cs" />
+    <Compile Remove="..\Shared\ThemeManager.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitizenFX.Core.Client" Version="1.0.6985" />
-    <PackageReference Include="LemonUI.FiveM" Version="2.1.1" />
+    <PackageReference Include="CitizenFX.Core.Server" Version="1.0.10243" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
   </ItemGroup>
 
 </Project>

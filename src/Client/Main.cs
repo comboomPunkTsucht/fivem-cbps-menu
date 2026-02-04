@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CitizenFX.Core;
@@ -60,6 +61,8 @@ namespace CBPSMenu.Client
         public static VoiceMenu VoiceMenuInstance { get; private set; }
         public static RaceMenu RaceMenuInstance { get; private set; }
         public static SettingsMenu SettingsMenuInstance { get; private set; }
+        public static OnlinePlayersMenu OnlinePlayersMenuInstance { get; private set; }
+        public static TeamMenu TeamMenuInstance { get; private set; }
 
         // Manager instances
         public static PlayerManager PlayerManagerInstance { get; private set; }
@@ -91,6 +94,12 @@ namespace CBPSMenu.Client
 
             // Register tick handler
             Tick += OnTick;
+
+            // Register team event handlers
+            RegisterTeamEvents();
+
+            // Register race event handlers
+            RegisterRaceEvents();
 
             Debug.WriteLine("[comboom.sucht] Menu system initialized successfully!");
         }
@@ -143,15 +152,19 @@ namespace CBPSMenu.Client
             VoiceMenuInstance = new VoiceMenu();
             RaceMenuInstance = new RaceMenu();
             SettingsMenuInstance = new SettingsMenu();
+            OnlinePlayersMenuInstance = new OnlinePlayersMenu();
+            TeamMenuInstance = new TeamMenu();
 
             // Add submenus to main menu
             AddSubmenuToMain(PlayerMenuInstance.Menu, "Player Options", "Modify your player settings");
+            AddSubmenuToMain(OnlinePlayersMenuInstance.Menu, "Online Players", "View and interact with other players");
             AddSubmenuToMain(VehicleMenuInstance.Menu, "Vehicle Options", "Modify your current vehicle");
             AddSubmenuToMain(VehicleSpawnerMenuInstance.Menu, "Vehicle Spawner", "Spawn vehicles by category");
             AddSubmenuToMain(SavedVehiclesMenuInstance.Menu, "Saved Vehicles", "Manage your saved vehicles");
             AddSubmenuToMain(WeaponMenuInstance.Menu, "Weapon Options", "Modify your weapons");
             AddSubmenuToMain(WorldMenuInstance.Menu, "World Options", "Change time and weather");
             AddSubmenuToMain(VoiceMenuInstance.Menu, "Voice Options", "Manage voice chat settings");
+            AddSubmenuToMain(TeamMenuInstance.Menu, "Team Menu", "Team selection and blips");
             AddSubmenuToMain(RaceMenuInstance.Menu, "Race Menu", "Create and join races");
             AddSubmenuToMain(SettingsMenuInstance.Menu, "Settings", "Menu settings and keybindings");
 
@@ -206,6 +219,126 @@ namespace CBPSMenu.Client
             Debug.WriteLine("[comboom.sucht] Key mappings registered");
         }
 
+        /// <summary>
+        /// Register team-related event handlers from server
+        /// </summary>
+        private void RegisterTeamEvents()
+        {
+            // Handle team update from server (when any player changes team)
+            EventHandlers["cbps:teamUpdated"] += new Action<int, int>((serverId, teamIndex) =>
+            {
+                if (TeamMenuInstance != null)
+                {
+                    TeamMenuInstance.OnTeamUpdated(serverId, teamIndex);
+                }
+            });
+
+            // Handle player disconnect
+            EventHandlers["cbps:playerDisconnected"] += new Action<int>((serverId) =>
+            {
+                if (TeamMenuInstance != null)
+                {
+                    TeamMenuInstance.OnPlayerDisconnect(serverId);
+                }
+            });
+
+            // Handle full team data sync from server
+            EventHandlers["cbps:teamDataSync"] += new Action<IDictionary<string, object>>((data) =>
+            {
+                if (TeamMenuInstance != null)
+                {
+                    var teamData = new System.Collections.Generic.Dictionary<int, int>();
+                    foreach (var kvp in data)
+                    {
+                        teamData[Convert.ToInt32(kvp.Key)] = Convert.ToInt32(kvp.Value);
+                    }
+                    TeamMenuInstance.OnTeamDataReceived(teamData);
+                }
+            });
+
+            Debug.WriteLine("[comboom.sucht] Team event handlers registered");
+        }
+
+        /// <summary>
+        /// Register race-related event handlers from server
+        /// </summary>
+        private void RegisterRaceEvents()
+        {
+            // Race created by server
+            EventHandlers["cbps:raceCreated"] += new Action<int>((raceId) =>
+            {
+                if (RaceMenuInstance != null)
+                {
+                    RaceMenuInstance.OnRaceCreated(raceId);
+                }
+            });
+
+            // Receive saved race templates from server
+            EventHandlers["cbps:receiveSavedRaceTemplates"] += new Action<dynamic>((templates) =>
+            {
+                if (RaceMenuInstance != null)
+                {
+                    RaceMenuInstance.OnReceiveSavedTemplates(templates);
+                }
+            });
+
+            // Race template loaded from server
+            EventHandlers["cbps:raceTemplateLoaded"] += new Action<dynamic>((checkpoints) =>
+            {
+                if (RaceMenuInstance != null)
+                {
+                    RaceMenuInstance.OnRaceTemplateLoaded(checkpoints);
+                }
+            });
+
+            // Joined a race
+            EventHandlers["cbps:joinedRace"] += new Action<int, dynamic>((raceId, checkpoints) =>
+            {
+                if (RaceMenuInstance != null)
+                {
+                    RaceMenuInstance.OnJoinedRace(raceId, checkpoints);
+                }
+            });
+
+            // Race started
+            EventHandlers["cbps:raceStarted"] += new Action<int>((countdown) =>
+            {
+                if (RaceMenuInstance != null)
+                {
+                    RaceMenuInstance.OnRaceStarted(countdown);
+                }
+            });
+
+            // Checkpoint reached
+            EventHandlers["cbps:checkpointReached"] += new Action<int>((checkpointNum) =>
+            {
+                if (RaceMenuInstance != null)
+                {
+                    RaceMenuInstance.OnCheckpointReached(checkpointNum);
+                }
+            });
+
+            // Race finished
+            EventHandlers["cbps:raceFinished"] += new Action<int, long>((position, time) =>
+            {
+                if (RaceMenuInstance != null)
+                {
+                    RaceMenuInstance.OnRaceFinished(position, time);
+                }
+            });
+
+            // Left race
+            EventHandlers["cbps:leftRace"] += new Action(() =>
+            {
+                if (RaceMenuInstance != null)
+                {
+                    RaceMenuInstance.OnLeftRace();
+                }
+            });
+
+            Debug.WriteLine("[comboom.sucht] Race event handlers registered");
+        }
+
         #endregion
 
         #region Tick Handler
@@ -221,6 +354,12 @@ namespace CBPSMenu.Client
             // Process managers
             await PlayerManagerInstance.ProcessTick();
             await VehicleManagerInstance.ProcessTick();
+
+            // Process team menu (blips and nametags)
+            if (TeamMenuInstance != null)
+            {
+                await TeamMenuInstance.ProcessTick();
+            }
 
             await Task.FromResult(0);
         }

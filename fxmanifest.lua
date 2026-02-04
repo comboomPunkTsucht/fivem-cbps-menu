@@ -10,22 +10,8 @@ client_scripts {
     'CBPSMenu.net.dll'
 }
 
--- Lua support scripts (for features that work alongside the C# menu)
-client_scripts {
-    'config.lua',
-    'client/voice.lua'
-}
-
 server_scripts {
-    'config.lua',
-    'server/main.lua',
-    'server/settings.lua',
-    'server/player.lua',
-    'server/vehicle.lua',
-    'server/weapons.lua',
-    'server/voice.lua',
-    'server/team.lua',
-    'server/race.lua'
+    'CBPSMenu.Server.net.dll'
 }
 
 -- LemonUI library and Newtonsoft.Json for race system
