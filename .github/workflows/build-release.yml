@@ -47,7 +47,7 @@ jobs:
           fi
 
           # Check if a release with this date already exists
-          if gh release view "v${BASE_VERSION}${SUFFIX}" > /dev/null 2>&1; then
+          if gh release view "v${BASE_VERSION}" > /dev/null 2>&1; then
             # Version exists, add timestamp
             echo "version=${BASE_VERSION}${SUFFIX}-${{ steps.timestamp.outputs.timestamp }}" >> $GITHUB_OUTPUT
           else
