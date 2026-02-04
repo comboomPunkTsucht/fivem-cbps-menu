@@ -10,6 +10,10 @@ on:
       - main
       - main/*
   # Also allow manual trigger
+  push:
+    branches:
+      - main
+      - main/*
   workflow_dispatch:
 
 jobs:
