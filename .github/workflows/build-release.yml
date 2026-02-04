@@ -137,7 +137,7 @@ jobs:
             - **F9** - Reset Player State (emergency)
 
             ### Changes
-            ${{ github.event.pull_request.title || 'Manual build' }}
+            ${{ github.event.pull_request.title || github.event.head_commit.message || 'Manual build' }}
 
             ${{ github.event.pull_request.body || '' }}
           files: |
