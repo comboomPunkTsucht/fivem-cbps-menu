@@ -17,9 +17,7 @@ server_scripts {
 
 -- Required files
 files {
-    'LemonUI.FiveM.dll',
-    'Newtonsoft.Json.dll',
-    'config.json'
+    'LemonUI.FiveM.dll'
 }
 
 -- Required dependencies

@@ -57,7 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update fxmanifest version
+      - name: Update versions strings
         run: |
           sed -i "s/^version '.*'/version '${{ steps.version.outputs.version }}'/" fxmanifest.lua
           sed -i "s/^<Version>.*<\/Version>/<Version>${{ steps.version.outputs.version }}<\/Version>/" src/CBPSMenu.csproj
@@ -99,10 +99,8 @@ jobs:
           cp dist/CBPSMenu.net.dll release/${{ env.MENU_NAME }}/
           cp dist/CBPSMenu.Server.net.dll release/${{ env.MENU_NAME }}/
           cp dist/LemonUI.FiveM.dll release/${{ env.MENU_NAME }}/
-          cp dist/Newtonsoft.Json.dll release/${{ env.MENU_NAME }}/
 
-          # Copy config and manifest
-          cp config.json release/${{ env.MENU_NAME }}/
+          # Copy manifest
           cp fxmanifest.lua release/${{ env.MENU_NAME }}/
 
           # Copy documentation

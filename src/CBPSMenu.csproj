@@ -18,7 +18,6 @@
   <ItemGroup>
     <PackageReference Include="CitizenFX.Core.Client" Version="1.0.10230" />
     <PackageReference Include="LemonUI.FiveM" Version="2.2.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
@@ -31,6 +30,5 @@
   <!-- Copy dependencies to dist folder -->
   <Target Name="CopyDependencies" AfterTargets="Build">
     <Copy SourceFiles="$(OutputPath)LemonUI.FiveM.dll" DestinationFolder="../dist/" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)Newtonsoft.Json.dll" DestinationFolder="../dist/" SkipUnchangedFiles="true" />
   </Target>
 </Project>

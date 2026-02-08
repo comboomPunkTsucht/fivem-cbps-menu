@@ -9,7 +9,7 @@ using LemonUI.Menus;
 
 using CBPSMenu.Shared;
 using CBPSMenu.Client.Data;
-using Newtonsoft.Json;
+
 
 using static CitizenFX.Core.Native.API;
 
@@ -166,24 +166,37 @@ namespace CBPSMenu.Client.Menus
 
         private void LoadLoadouts()
         {
-            var json = GetResourceKvpString("cbps_weapon_loadouts");
-            if (!string.IsNullOrEmpty(json))
+            var dataString = GetResourceKvpString("cbps_weapon_loadouts");
+            loadouts.Clear();
+
+            if (!string.IsNullOrEmpty(dataString))
             {
-                try
+                var entries = dataString.Split(new[] { ";;" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var entry in entries)
                 {
-                    loadouts = JsonConvert.DeserializeObject<List<WeaponLoadoutData>>(json) ?? new List<WeaponLoadoutData>();
-                }
-                catch
-                {
-                    loadouts = new List<WeaponLoadoutData>();
+                    var parts = entry.Split('|');
+                    if (parts.Length >= 2)
+                    {
+                        var loadout = new WeaponLoadoutData
+                        {
+                            Name = parts[0],
+                            Weapons = new List<string>(parts[1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                        };
+                        loadouts.Add(loadout);
+                    }
                 }
             }
         }
 
         private void SaveLoadoutsToKvp()
         {
-            var json = JsonConvert.SerializeObject(loadouts);
-            SetResourceKvp("cbps_weapon_loadouts", json);
+            var entries = new List<string>();
+            foreach (var loadout in loadouts)
+            {
+                var weaponsStr = string.Join(",", loadout.Weapons);
+                entries.Add($"{loadout.Name}|{weaponsStr}");
+            }
+            SetResourceKvp("cbps_weapon_loadouts", string.Join(";;", entries));
         }
 
         private async Task<string> GetUserInput(string windowTitle, string defaultText, int maxLength)

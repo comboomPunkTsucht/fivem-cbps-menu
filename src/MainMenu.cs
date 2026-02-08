@@ -155,13 +155,34 @@ namespace CBPSMenu.Client
             Notify.Info("You have been summoned.");
         }
 
-        private void OnReceiveBanList(string json)
+        private void OnReceiveBanList(string dataString)
         {
             if (bannedPlayersMenu != null)
             {
                 try
                 {
-                    var list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<BannedPlayerData>>(json);
+                    var list = new List<BannedPlayerData>();
+                    if (!string.IsNullOrEmpty(dataString))
+                    {
+                        var entries = dataString.Split(new[] { ";;" }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var entry in entries)
+                        {
+                            var parts = entry.Split('|');
+                            if (parts.Length >= 7)
+                            {
+                                list.Add(new BannedPlayerData
+                                {
+                                    Name = parts[0],
+                                    Identifier = parts[1],
+                                    Reason = parts[2],
+                                    BanDate = parts[3],
+                                    ExpireDate = parts[4],
+                                    IsPermanent = bool.Parse(parts[5]),
+                                    BannedBy = parts[6]
+                                });
+                            }
+                        }
+                    }
                     bannedPlayersMenu.UpdateBanList(list);
                 }
                 catch { }

@@ -8,7 +8,7 @@ using LemonUI;
 using LemonUI.Menus;
 
 using CBPSMenu.Shared;
-using Newtonsoft.Json;
+
 
 using static CitizenFX.Core.Native.API;
 
@@ -184,24 +184,44 @@ namespace CBPSMenu.Client.Menus
 
         private void LoadSavedVehicles()
         {
-            var json = GetResourceKvpString("cbps_saved_vehicles");
-            if (!string.IsNullOrEmpty(json))
+            var dataString = GetResourceKvpString("cbps_saved_vehicles");
+            savedVehicles.Clear();
+
+            if (!string.IsNullOrEmpty(dataString))
             {
-                try
+                var entries = dataString.Split(new[] { ";;" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var entry in entries)
                 {
-                    savedVehicles = JsonConvert.DeserializeObject<List<SavedVehicleData>>(json) ?? new List<SavedVehicleData>();
-                }
-                catch
-                {
-                    savedVehicles = new List<SavedVehicleData>();
+                    var parts = entry.Split('|');
+                    if (parts.Length >= 6)
+                    {
+                        try
+                        {
+                            var vehicle = new SavedVehicleData
+                            {
+                                Name = parts[0],
+                                Model = parts[1],
+                                Hash = uint.Parse(parts[2]),
+                                PrimaryColor = int.Parse(parts[3]),
+                                SecondaryColor = int.Parse(parts[4]),
+                                PlateText = parts[5]
+                            };
+                            savedVehicles.Add(vehicle);
+                        }
+                        catch { }
+                    }
                 }
             }
         }
 
         private void SaveVehiclesToKvp()
         {
-            var json = JsonConvert.SerializeObject(savedVehicles);
-            SetResourceKvp("cbps_saved_vehicles", json);
+            var entries = new List<string>();
+            foreach (var veh in savedVehicles)
+            {
+                entries.Add($"{veh.Name}|{veh.Model}|{veh.Hash}|{veh.PrimaryColor}|{veh.SecondaryColor}|{veh.PlateText}");
+            }
+            SetResourceKvp("cbps_saved_vehicles", string.Join(";;", entries));
         }
 
         private async Task<string> GetUserInput(string windowTitle, string defaultText, int maxLength)

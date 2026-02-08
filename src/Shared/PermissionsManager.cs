@@ -327,6 +327,9 @@ namespace CBPSMenu.Shared
         /// <summary>
         /// Sets the permissions for a specific player.
         /// </summary>
+        /// <summary>
+        /// Sets the permissions for a specific player.
+        /// </summary>
         public static void SetPermissionsForPlayer([FromSource] Player player)
         {
             if (player == null)
@@ -334,28 +337,43 @@ namespace CBPSMenu.Shared
                 return;
             }
 
-            var perms = new Dictionary<Permission, bool>();
+            var perms = new List<string>();
 
             // Loop through all permissions and check if they're allowed
             foreach (var p in Enum.GetValues(typeof(Permission)))
             {
                 var permission = (Permission)p;
-                if (!perms.ContainsKey(permission))
+                if (IsAllowed(permission, player))
                 {
-                    perms.Add(permission, IsAllowed(permission, player));
+                    // Only send allowed permissions to save bandwidth
+                    perms.Add($"{(int)permission}");
                 }
             }
 
-            // Send the permissions to the client
-            player.TriggerEvent("cbps:SetPermissions", Newtonsoft.Json.JsonConvert.SerializeObject(perms));
+            // Send the allowed permissions indices semi-colon separated
+            player.TriggerEvent("cbps:SetPermissions", string.Join(";", perms));
         }
 #else
         /// <summary>
         /// Sets the permission (client side event handler).
         /// </summary>
-        public static void SetPermissions(string permissions)
+        public static void SetPermissions(string permissionsString)
         {
-            Permissions = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<Permission, bool>>(permissions);
+            Permissions.Clear();
+            if (!string.IsNullOrEmpty(permissionsString))
+            {
+                var allowedIndices = permissionsString.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var indexStr in allowedIndices)
+                {
+                    if (int.TryParse(indexStr, out int index))
+                    {
+                        if (Enum.IsDefined(typeof(Permission), index))
+                        {
+                            Permissions[(Permission)index] = true;
+                        }
+                    }
+                }
+            }
             ArePermissionsSetup = true;
         }
 #endif
