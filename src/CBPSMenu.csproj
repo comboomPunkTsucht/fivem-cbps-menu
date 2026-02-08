@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitizenFX.Core.Client" Version="1.0.7161" />
+    <PackageReference Include="CitizenFX.Core.Client" Version="1.0.10230" />
     <PackageReference Include="LemonUI.FiveM" Version="2.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
