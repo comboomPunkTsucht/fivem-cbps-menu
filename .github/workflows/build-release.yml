@@ -72,7 +72,7 @@ jobs:
           sed -i "s/^<InformationalVersion>.*<\/InformationalVersion>/<InformationalVersion>${{ steps.version.outputs.version }}<\/InformationalVersion>/" src/CBPSMenu.Server/CBPSMenu.Server.csproj
           sed -i "s/^<Description>.*<\/Description>/<Description>${{ steps.version.outputs.version }}<\/Description>/" src/CBPSMenu.csproj
           sed -i "s/^<Description>.*<\/Description>/<Description>${{ steps.version.outputs.version }}<\/Description>/" src/CBPSMenu.Server/CBPSMenu.Server.csproj
-          sed -i "s/^VERSION = '.*'/VERSION = '${{ steps.version.outputs.version }}'/" src/MainMenu.cs
+          sed -i "s/^private const string VERSION = '.*'/private const string VERSION = '${{ steps.version.outputs.version }}'/" src/MainMenu.cs
 
 
       - name: Setup .NET

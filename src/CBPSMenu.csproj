@@ -3,7 +3,7 @@
     <TargetFramework>net452</TargetFramework>
     <AssemblyName>CBPSMenu.net</AssemblyName>
     <OutputType>Library</OutputType>
-    <OutputPath>../dist/Client/</OutputPath>
+    <OutputPath>../dist/</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <LangVersion>latest</LangVersion>
     <RootNamespace>CBPSMenu.Client</RootNamespace>
@@ -11,20 +11,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="**/*.cs" />
+    <!-- Include all client code EXCEPT server folder -->
+    <Compile Include="**/*.cs" Exclude="CBPSMenu.Server/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CitizenFX.Core.Client" Version="1.0.10230" />
     <PackageReference Include="LemonUI.FiveM" Version="2.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
-
-
 
   <!-- Copy dependencies to dist folder -->
   <Target Name="CopyDependencies" AfterTargets="Build">
-    <Copy SourceFiles="$(OutputPath)LemonUI.FiveM.dll" DestinationFolder="../dist/lib/" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)Newtonsoft.Json.dll" DestinationFolder="../dist/lib/" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)LemonUI.FiveM.dll" DestinationFolder="../dist/" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)Newtonsoft.Json.dll" DestinationFolder="../dist/" SkipUnchangedFiles="true" />
   </Target>
 </Project>

@@ -514,7 +514,7 @@ namespace CBPSMenu.Client.Menus
                     if (DrivingStyleIndex == 4)
                     {
                         var style = GetCustomDrivingStyle();
-                        customDrivingStyleMenu.Subtitle = $"Custom style: {style}";
+                        customDrivingStyleMenu.Name = $"Custom style: {style}";
                         SetDriveTaskDrivingStyle(Game.PlayerPed.Handle, style);
                         Notify.Custom("Driving style updated.");
                     }

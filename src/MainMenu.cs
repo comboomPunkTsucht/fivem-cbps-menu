@@ -129,6 +129,11 @@ namespace CBPSMenu.Client
         private void OnSetPermissions(string permissions)
         {
             PermissionsManager.SetPermissions(permissions);
+
+            // Pass exports to menus that need them
+            TeamsMenu.SetExports(Exports);
+            VoiceSettings.SetExports(Exports);
+
             CreateMenus();
             Debug.WriteLine("[comboom.sucht Menu] Permissions set and menus created.");
         }
@@ -471,8 +476,7 @@ namespace CBPSMenu.Client
                 Config.BannerTexture
             );
             menu.Banner.Color = Config.HeaderColor;
-            menu.AccentColor = Config.HighlightColor;
-            menu.DescriptionBackColor = Config.BackgroundColor;
+            // Note: AccentColor and DescriptionBackColor not available in LemonUI 2.2.0
         }
 
         /// <summary>

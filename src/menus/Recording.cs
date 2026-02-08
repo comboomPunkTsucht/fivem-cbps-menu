@@ -32,12 +32,12 @@ namespace CBPSMenu.Client.Menus
                 var startRecording = new NativeItem("Start Recording", "Start recording gameplay (Rockstar Editor).");
                 startRecording.Activated += (s, e) =>
                 {
-                    if (IsRecordingGameplayNow())
+                    if (IsRecording)
                     {
                         Notify.Error("Already recording!");
                         return;
                     }
-                    StartRecording(1); // 1 = Action replay recording
+                    Function.Call((Hash)0xC3AC2FFF9612AC81, 1); // START_RECORDING
                     IsRecording = true;
                     Notify.Success("Recording started.");
                 };
@@ -46,12 +46,12 @@ namespace CBPSMenu.Client.Menus
                 var stopRecording = new NativeItem("Stop Recording", "Stop the current recording.");
                 stopRecording.Activated += (s, e) =>
                 {
-                    if (!IsRecordingGameplayNow())
+                    if (!IsRecording)
                     {
                         Notify.Error("Not currently recording.");
                         return;
                     }
-                    StopRecording();
+                    Function.Call((Hash)0xB66D95C9E7D24B1C); // STOP_RECORDING
                     IsRecording = false;
                     Notify.Success("Recording stopped.");
                 };
@@ -60,14 +60,7 @@ namespace CBPSMenu.Client.Menus
                 var saveRecording = new NativeItem("Save Last Recording", "Save the last recorded clip.");
                 saveRecording.Activated += (s, e) =>
                 {
-                    if (IsRecordingGameplayNow())
-                    {
-                        StopRecordingAndSaveClip();
-                    }
-                    else
-                    {
-                        SaveRecordingClip();
-                    }
+                    Function.Call((Hash)0x644546EC5287471B); // STOP_RECORDING_AND_SAVE_CLIP
                     IsRecording = false;
                     Notify.Success("Recording saved.");
                 };
@@ -76,14 +69,7 @@ namespace CBPSMenu.Client.Menus
                 var discardRecording = new NativeItem("~r~Discard Recording", "Discard the current/last recording.");
                 discardRecording.Activated += (s, e) =>
                 {
-                    if (IsRecordingGameplayNow())
-                    {
-                        StopRecordingAndDiscardClip();
-                    }
-                    else
-                    {
-                        DiscardRecording();
-                    }
+                    Function.Call((Hash)0x88BB3507ED41A240); // STOP_RECORDING_AND_DISCARD_CLIP
                     IsRecording = false;
                     Notify.Info("Recording discarded.");
                 };
@@ -99,9 +85,9 @@ namespace CBPSMenu.Client.Menus
                 var openEditor = new NativeItem("Open Rockstar Editor", "Open the Rockstar Editor to edit clips.");
                 openEditor.Activated += (s, e) =>
                 {
-                    if (IsRecordingGameplayNow())
+                    if (IsRecording)
                     {
-                        StopRecordingAndSaveClip();
+                        Function.Call((Hash)0x644546EC5287471B); // STOP_RECORDING_AND_SAVE_CLIP
                         IsRecording = false;
                     }
                     ActivateRockstarEditor();
@@ -116,42 +102,19 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.RECCamera))
             {
-                var freeCam = new NativeItem("Toggle Free Camera", "Toggle the free camera mode.");
-                freeCam.Activated += (s, e) =>
-                {
-                    // This is a simplified version - full implementation would involve camera manipulation
-                    SetCinematicModeActive(true);
-                    Notify.Info("Cinematic mode activated. Press B to exit.");
-                };
-                menu.Add(freeCam);
-
                 var cinematicBars = new NativeCheckboxItem("Cinematic Mode", "Toggle cinematic black bars.", false);
                 cinematicBars.CheckboxChanged += (s, e) =>
                 {
                     SetCinematicModeActive(cinematicBars.Checked);
                 };
                 menu.Add(cinematicBars);
-
-                var cinemaReplay = new NativeItem("Start Action Replay", "View the last 30 seconds in action replay.");
-                cinemaReplay.Activated += (s, e) =>
-                {
-                    if (IsRecordingGameplayNow())
-                    {
-                        StopRecording();
-                        IsRecording = false;
-                    }
-                    // Note: There's no direct native for action replay in single frame
-                    Notify.Info("Use R* Editor for action replay viewing.");
-                };
-                menu.Add(cinemaReplay);
             }
 
             #endregion
 
             #region Info
 
-            var recordingInfo = new NativeItem("~y~Recording Info", "Tips for using the recording features.");
-            recordingInfo.Description = "Recordings are saved to your Rockstar Editor. Access them via Pause Menu > Game > Rockstar Editor.";
+            var recordingInfo = new NativeItem("~y~Recording Info", "Recordings saved to Rockstar Editor.");
             menu.Add(recordingInfo);
 
             #endregion

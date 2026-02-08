@@ -18,8 +18,14 @@ namespace CBPSMenu.Client.Menus
     public class TeamsMenu
     {
         private NativeMenu menu;
+        private static ExportDictionary exports;
 
         public string CurrentTeam { get; private set; } = null;
+
+        public static void SetExports(ExportDictionary exp)
+        {
+            exports = exp;
+        }
 
         private void CreateMenu()
         {
@@ -72,16 +78,16 @@ namespace CBPSMenu.Client.Menus
             try
             {
                 // Set the radio channel via pma-voice/pma-radio exports
-                // pma-radio uses setRadioChannel export
-                Exports["pma-voice"].setRadioChannel(frequency);
-
-                // Also enable radio if not already
-                Exports["pma-voice"].setVoiceProperty("radioEnabled", true);
+                if (exports != null)
+                {
+                    exports["pma-voice"].setRadioChannel(frequency);
+                    exports["pma-voice"].setVoiceProperty("radioEnabled", true);
+                }
 
                 Notify.Success($"Joined {teamName}. Radio set to {frequency} MHz.");
 
                 // Notify server of team join
-                TriggerServerEvent("cbps:joinTeam", teamName, frequency);
+                BaseScript.TriggerServerEvent("cbps:joinTeam", teamName, frequency);
             }
             catch (Exception ex)
             {
@@ -101,12 +107,15 @@ namespace CBPSMenu.Client.Menus
             try
             {
                 // Disable radio channel
-                Exports["pma-voice"].setRadioChannel(0);
+                if (exports != null)
+                {
+                    exports["pma-voice"].setRadioChannel(0);
+                }
 
                 Notify.Info($"Left {previousTeam}. Radio disabled.");
 
                 // Notify server of team leave
-                TriggerServerEvent("cbps:leaveTeam", previousTeam);
+                BaseScript.TriggerServerEvent("cbps:leaveTeam", previousTeam);
             }
             catch (Exception ex)
             {

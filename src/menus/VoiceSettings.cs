@@ -17,6 +17,7 @@ namespace CBPSMenu.Client.Menus
     public class VoiceSettings
     {
         private NativeMenu menu;
+        private static ExportDictionary exports;
 
         public float CurrentProximity { get; private set; }
         public int CurrentRadioChannel { get; private set; } = 0;
@@ -32,6 +33,11 @@ namespace CBPSMenu.Client.Menus
             50f,   // 50m
             100f,  // 100m
         };
+
+        public static void SetExports(ExportDictionary exp)
+        {
+            exports = exp;
+        }
 
         private void CreateMenu()
         {
@@ -134,8 +140,10 @@ namespace CBPSMenu.Client.Menus
         {
             try
             {
-                // pma-voice uses setVoiceProperty for proximity
-                Exports["pma-voice"].setVoiceProperty("proximity", proximity);
+                if (exports != null)
+                {
+                    exports["pma-voice"].setVoiceProperty("proximity", proximity);
+                }
                 Notify.Info($"Voice proximity set to {proximity}m.");
             }
             catch (Exception ex)
@@ -151,7 +159,10 @@ namespace CBPSMenu.Client.Menus
         {
             try
             {
-                Exports["pma-voice"].setVoiceProperty("radioEnabled", enabled);
+                if (exports != null)
+                {
+                    exports["pma-voice"].setVoiceProperty("radioEnabled", enabled);
+                }
                 Notify.Info($"Radio {(enabled ? "enabled" : "disabled")}.");
             }
             catch (Exception ex)
@@ -167,7 +178,10 @@ namespace CBPSMenu.Client.Menus
         {
             try
             {
-                Exports["pma-voice"].setRadioChannel(channel);
+                if (exports != null)
+                {
+                    exports["pma-voice"].setRadioChannel(channel);
+                }
                 CurrentRadioChannel = channel;
             }
             catch (Exception ex)

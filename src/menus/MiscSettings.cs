@@ -76,24 +76,24 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.MSTeleportLocations))
             {
-                var teleportLocations = new List<(string name, float x, float y, float z)>
+                // Teleport location data (name => x, y, z)
+                var locationData = new Dictionary<string, Vector3>
                 {
-                    ("LSIA", -1034.6f, -2733.6f, 20.2f),
-                    ("Sandy Shores", 1697.6f, 3245.7f, 41.5f),
-                    ("Paleto Bay", -319.8f, 6083.7f, 31.5f),
-                    ("Mount Chiliad", 497.8f, 5591.2f, 795.0f),
-                    ("Fort Zancudo", -2358.8f, 3249.1f, 101.5f),
-                    ("Maze Bank Tower", -75.0f, -818.2f, 326.2f),
-                    ("Del Perro Pier", -1850.1f, -1231.8f, 13.0f),
-                    ("Vinewood Sign", 711.4f, 1198.2f, 348.5f),
-                    ("Downtown Vinewood", 287.5f, 180.5f, 104.6f),
-                    ("Eclipse Towers", -773.5f, 312.0f, 85.7f),
-                    ("Vespucci Beach", -1373.6f, -1398.8f, 6.1f),
-                    ("Diamond Casino", 924.9f, 47.5f, 81.1f),
+                    { "LSIA", new Vector3(-1034.6f, -2733.6f, 20.2f) },
+                    { "Sandy Shores", new Vector3(1697.6f, 3245.7f, 41.5f) },
+                    { "Paleto Bay", new Vector3(-319.8f, 6083.7f, 31.5f) },
+                    { "Mount Chiliad", new Vector3(497.8f, 5591.2f, 795.0f) },
+                    { "Fort Zancudo", new Vector3(-2358.8f, 3249.1f, 101.5f) },
+                    { "Maze Bank Tower", new Vector3(-75.0f, -818.2f, 326.2f) },
+                    { "Del Perro Pier", new Vector3(-1850.1f, -1231.8f, 13.0f) },
+                    { "Vinewood Sign", new Vector3(711.4f, 1198.2f, 348.5f) },
+                    { "Downtown Vinewood", new Vector3(287.5f, 180.5f, 104.6f) },
+                    { "Eclipse Towers", new Vector3(-773.5f, 312.0f, 85.7f) },
+                    { "Vespucci Beach", new Vector3(-1373.6f, -1398.8f, 6.1f) },
+                    { "Diamond Casino", new Vector3(924.9f, 47.5f, 81.1f) },
                 };
 
-                var locationNames = new List<string>();
-                foreach (var loc in teleportLocations) locationNames.Add(loc.name);
+                var locationNames = new List<string>(locationData.Keys);
 
                 var teleportList = new NativeListItem<string>("Teleport Locations", "Teleport to preset locations.", locationNames.ToArray());
                 menu.Add(teleportList);
@@ -101,9 +101,10 @@ namespace CBPSMenu.Client.Menus
                 var goToLocation = new NativeItem("Go To Selected Location", "Teleport to the selected location.");
                 goToLocation.Activated += (s, e) =>
                 {
-                    var location = teleportLocations[teleportList.SelectedIndex];
-                    SetPedCoordsKeepVehicle(Game.PlayerPed.Handle, location.x, location.y, location.z);
-                    Notify.Success($"Teleported to {location.name}.");
+                    var name = locationNames[teleportList.SelectedIndex];
+                    var pos = locationData[name];
+                    SetPedCoordsKeepVehicle(Game.PlayerPed.Handle, pos.X, pos.Y, pos.Z);
+                    Notify.Success($"Teleported to {name}.");
                 };
                 menu.Add(goToLocation);
             }

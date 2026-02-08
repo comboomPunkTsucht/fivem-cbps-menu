@@ -51,7 +51,7 @@ namespace CBPSMenu.Client.Menus
                 dynamicCheckbox.CheckboxChanged += (sender, e) =>
                 {
                     DynamicWeather = dynamicCheckbox.Checked;
-                    TriggerServerEvent("cbps:setDynamicWeather", DynamicWeather);
+                    BaseScript.TriggerServerEvent("cbps:setDynamicWeather", DynamicWeather);
                 };
                 menu.Add(dynamicCheckbox);
             }
@@ -78,7 +78,7 @@ namespace CBPSMenu.Client.Menus
                     var weatherItem = new NativeItem(FormatWeatherName(weather), $"Set weather to {FormatWeatherName(weather)}.");
                     weatherItem.Activated += (sender, e) =>
                     {
-                        TriggerServerEvent("cbps:setWeather", weather);
+                        BaseScript.TriggerServerEvent("cbps:setWeather", weather);
                         Notify.Success($"Weather set to {FormatWeatherName(weather)}.");
                     };
                     menu.Add(weatherItem);

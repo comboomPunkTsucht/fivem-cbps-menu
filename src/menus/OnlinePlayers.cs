@@ -39,7 +39,7 @@ namespace CBPSMenu.Client.Menus
             refreshBtn.Activated += (s, e) => RefreshPlayerList();
             menu.Add(refreshBtn);
 
-            var players = new PlayerList();
+            var players = Game.Players;
             foreach (Player player in players)
             {
                 if (player != null)

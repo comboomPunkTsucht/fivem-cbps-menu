@@ -32,7 +32,7 @@ namespace CBPSMenu.Client.Menus
                 freezeTimeCheckbox.CheckboxChanged += (sender, e) =>
                 {
                     FreezeTime = freezeTimeCheckbox.Checked;
-                    TriggerServerEvent("cbps:setTimeFrozen", FreezeTime);
+                    BaseScript.TriggerServerEvent("cbps:setTimeFrozen", FreezeTime);
                 };
                 menu.Add(freezeTimeCheckbox);
             }
@@ -51,7 +51,7 @@ namespace CBPSMenu.Client.Menus
                 setTimeList.ItemChanged += (sender, e) =>
                 {
                     CurrentHour = hours.IndexOf(e.Object);
-                    TriggerServerEvent("cbps:setTime", CurrentHour, 0, 0);
+                    BaseScript.TriggerServerEvent("cbps:setTime", CurrentHour, 0, 0);
                     Notify.Info($"Time set to {hours[CurrentHour]}.");
                 };
                 menu.Add(setTimeList);
@@ -62,7 +62,7 @@ namespace CBPSMenu.Client.Menus
                 var morningButton = new NativeItem("Morning (06:00)", "Set time to early morning.");
                 morningButton.Activated += (sender, e) =>
                 {
-                    TriggerServerEvent("cbps:setTime", 6, 0, 0);
+                    BaseScript.TriggerServerEvent("cbps:setTime", 6, 0, 0);
                     Notify.Info("Time set to morning.");
                 };
                 menu.Add(morningButton);
@@ -70,7 +70,7 @@ namespace CBPSMenu.Client.Menus
                 var noonButton = new NativeItem("Noon (12:00)", "Set time to midday.");
                 noonButton.Activated += (sender, e) =>
                 {
-                    TriggerServerEvent("cbps:setTime", 12, 0, 0);
+                    BaseScript.TriggerServerEvent("cbps:setTime", 12, 0, 0);
                     Notify.Info("Time set to noon.");
                 };
                 menu.Add(noonButton);
@@ -78,7 +78,7 @@ namespace CBPSMenu.Client.Menus
                 var eveningButton = new NativeItem("Evening (18:00)", "Set time to evening.");
                 eveningButton.Activated += (sender, e) =>
                 {
-                    TriggerServerEvent("cbps:setTime", 18, 0, 0);
+                    BaseScript.TriggerServerEvent("cbps:setTime", 18, 0, 0);
                     Notify.Info("Time set to evening.");
                 };
                 menu.Add(eveningButton);
@@ -86,7 +86,7 @@ namespace CBPSMenu.Client.Menus
                 var nightButton = new NativeItem("Night (00:00)", "Set time to midnight.");
                 nightButton.Activated += (sender, e) =>
                 {
-                    TriggerServerEvent("cbps:setTime", 0, 0, 0);
+                    BaseScript.TriggerServerEvent("cbps:setTime", 0, 0, 0);
                     Notify.Info("Time set to night.");
                 };
                 menu.Add(nightButton);
