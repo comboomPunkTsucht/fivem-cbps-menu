@@ -40,7 +40,7 @@ namespace CBPSMenu.Client.Menus
             menu.Add(refreshBtn);
 
             // Use CitizenFX.Core.PlayerList for safer iteration
-            var players = new PlayerList();
+            var players = CBPSMenu.Client.MainMenu.Instance.Players;
             foreach (Player player in players)
             {
                 int playerId = player.Handle; // Local Handle (int)

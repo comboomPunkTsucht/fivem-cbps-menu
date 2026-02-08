@@ -59,6 +59,7 @@ namespace CBPSMenu.Client
         public static bool IsMenuOpen => _instance?.mainMenu?.Visible ?? false;
 
         private static MainMenu _instance;
+        public static MainMenu Instance => _instance;
 
         // Tick loop state references
         private PlayerOptions _playerOpts;
