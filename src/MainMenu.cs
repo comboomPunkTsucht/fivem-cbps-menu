@@ -60,6 +60,7 @@ namespace CBPSMenu.Client
 
         private static MainMenu _instance;
         public static MainMenu Instance => _instance;
+        public PlayerList CurrentPlayerList => Players;
 
         // Tick loop state references
         private PlayerOptions _playerOpts;
