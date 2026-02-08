@@ -16,8 +16,6 @@ resources/
     ├── CBPSMenu.net.dll
     ├── CBPSMenu.Server.net.dll
     ├── LemonUI.FiveM.dll
-    ├── Newtonsoft.Json.dll
-    ├── config.json
     └── fxmanifest.lua
 ```
 
@@ -50,19 +48,40 @@ add_ace group.user cbps.TMMenu allow
 
 ## ⚙️ Configuration
 
-Edit `config.json`:
+Configuration is handled via **ConVars** in your `server.cfg`.
 
-```json
-{
-  "menuTitle": "comboom.sucht Menu",
-  "menuSubtitle": "vMenu Clone",
-  "menuKey": "F1",
-  "theme": {
-    "headerColor": { "r": 94, "g": 129, "b": 172, "a": 255 },
-    "highlightColor": { "r": 136, "g": 192, "b": 208, "a": 255 },
-    "backgroundColor": { "r": 46, "g": 52, "b": 64, "a": 200 }
-  }
-}
+### Basic Settings
+
+```cfg
+setr cbps_menu_title "My Server Menu"
+setr cbps_menu_subtitle "Server Menu"
+setr cbps_menu_key "M"
+```
+
+### Theme Colors
+
+```cfg
+# Format: "r,g,b,a"
+setr cbps_header_color "94, 129, 172, 255"
+setr cbps_highlight_color "136, 192, 208, 255"
+setr cbps_background_color "46, 52, 64, 200"
+setr cbps_text_color "255, 236, 239, 244"
+```
+
+### Teams Configuration
+
+```cfg
+# Format: "Name:Freq:ColorHex;Name:Freq:ColorHex"
+setr cbps_teams "Police:101:#0000FF;EMS:102:#FF0000;Mechanic:103:#FFA500"
+```
+
+### Other Settings
+
+```cfg
+setr cbps_default_proximity "15.0"
+setr cbps_enable_radio_default "true"
+setr cbps_banner_dictionary "commonmenu"
+setr cbps_banner_texture "interaction_bgd"
 ```
 
 ## 🔑 Key Permissions
