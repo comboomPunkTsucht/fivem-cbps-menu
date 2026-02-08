@@ -41,6 +41,9 @@ namespace CBPSMenu.Client
         public static float DefaultProximity { get; private set; } = 15.0f;
         public static bool EnableRadioByDefault { get; private set; } = true;
 
+        // Permissions settings
+        public static bool UsePermissions { get; private set; } = true;
+
         // Racing settings
         public static string CheckpointModel { get; private set; } = "prop_mp_cone_01";
         public static string FinishModel { get; private set; } = "prop_mp_cone_02";
@@ -95,12 +98,18 @@ namespace CBPSMenu.Client
                 var countdown = GetConvarInt("cbps_countdown_seconds", -1);
                 if (countdown > 0) CountdownSeconds = countdown;
 
-                // Teams from ConVars (format: "TeamName:Frequency:Color;TeamName:Frequency:Color")
                 var teamsConfig = GetConvar("cbps_teams", "");
                 if (!string.IsNullOrEmpty(teamsConfig))
                 {
                     ParseTeamsConfig(teamsConfig);
                 }
+
+                // Permissions toggle
+                var usePerms = GetConvar("cbps_use_permissions", "true");
+                if (usePerms.ToLower() == "false") UsePermissions = false;
+                else UsePermissions = true;
+
+                PermissionsManager.UsePermissions = UsePermissions;
 
                 Debug.WriteLine("[comboom.sucht Menu] Configuration loaded successfully.");
             }

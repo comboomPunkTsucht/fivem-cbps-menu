@@ -230,11 +230,16 @@ namespace CBPSMenu.Shared
 
         private static readonly Dictionary<Permission, bool> allowedPerms = new Dictionary<Permission, bool>();
 
+        public static bool UsePermissions { get; set; } = true;
+
         /// <summary>
         /// Private function that handles client side permission requests.
         /// </summary>
         private static bool IsAllowedClient(Permission permission, bool checkAnyway)
         {
+            // If permissions are disabled via config, allow everything
+            if (!UsePermissions) return true;
+
             if (ArePermissionsSetup || checkAnyway)
             {
                 var staffPermissionAllowed = (

@@ -108,9 +108,11 @@ namespace CBPSMenu.Client
             RegisterKeyMapping("cbps_menu_toggle", "Open comboom.sucht Menu", "keyboard", Config.MenuKey);
             RegisterCommand("cbps_menu_toggle", new Action<int, List<object>, string>((source, args, raw) =>
             {
-                if (PermissionsManager.ArePermissionsSetup)
+                Debug.WriteLine($"[DEBUG] Toggle Request. Current Visible: {mainMenu?.Visible}");
+                // Fallback check included in IsAllowed
+                if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPMenu, true))
                 {
-                    mainMenu.Visible = !mainMenu.Visible;
+                    if (mainMenu != null) mainMenu.Visible = !mainMenu.Visible;
                 }
             }), false);
 
