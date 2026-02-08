@@ -22,90 +22,52 @@ resources/
 ### 2. Add to server.cfg
 
 ```cfg
+# Load configuration and permissions
+exec @comboom.sucht-menu/config.cfg
+
+# pma-voice for radio features
+ensure pma-voice
+ensure pma-radio
+
 # comboom.sucht Menu
 ensure comboom.sucht-menu
-
-# Optional: pma-voice for radio features
-ensure pma-voice
-```
-
-### 3. Configure Permissions
-
-```cfg
-# Admin (Full Access)
-add_ace group.admin cbps.Everything allow
-
-# Moderator
-add_ace group.moderator cbps.POMenu allow
-add_ace group.moderator cbps.VOMenu allow
-add_ace group.moderator cbps.OPMenu allow
-
-# Basic User
-add_ace group.user cbps.POMenu allow
-add_ace group.user cbps.VSMenu allow
-add_ace group.user cbps.TMMenu allow
 ```
 
 ## ⚙️ Configuration
 
-Configuration is handled via **ConVars** in your `server.cfg`.
+The menu comes with a `config.cfg` file that handles all permissions and settings.
+You can modify this file directly or override matching ConVars in your `server.cfg`.
 
-### Basic Settings
+### Basic Settings (in config.cfg)
 
 ```cfg
 setr cbps_menu_title "My Server Menu"
-setr cbps_menu_subtitle "Server Menu"
-setr cbps_menu_key "M"
-```
-
-### Theme Colors
-
-```cfg
-# Format: "r,g,b,a"
-setr cbps_header_color "94, 129, 172, 255"
-setr cbps_highlight_color "136, 192, 208, 255"
-setr cbps_background_color "46, 52, 64, 200"
-setr cbps_text_color "255, 236, 239, 244"
-```
-
-### Teams Configuration
-
-```cfg
-# Format: "Name:Freq:ColorHex;Name:Freq:ColorHex"
-setr cbps_teams "Police:101:#0000FF;EMS:102:#FF0000;Mechanic:103:#FFA500"
-```
-
-### Other Settings
-
-```cfg
-setr cbps_default_proximity "15.0"
-setr cbps_enable_radio_default "true"
-setr cbps_banner_dictionary "commonmenu"
-setr cbps_banner_texture "interaction_bgd"
+# ... see config.cfg for all options
 ```
 
 ## 🔑 Key Permissions
 
-| Permission        | Description            |
-| ----------------- | ---------------------- |
-| `cbps.Everything` | All permissions        |
-| `cbps.POMenu`     | Player Options menu    |
-| `cbps.VOMenu`     | Vehicle Options menu   |
-| `cbps.VSMenu`     | Vehicle Spawner menu   |
-| `cbps.WPMenu`     | Weapon Options menu    |
-| `cbps.PAMenu`     | Player Appearance menu |
-| `cbps.SVMenu`     | Saved Vehicles menu    |
-| `cbps.PVMenu`     | Personal Vehicle menu  |
-| `cbps.WLMenu`     | Weapon Loadouts menu   |
-| `cbps.MSMenu`     | Misc Settings menu     |
-| `cbps.RECMenu`    | Recording menu         |
-| `cbps.OPMenu`     | Online Players menu    |
-| `cbps.WOMenu`     | Weather Options menu   |
-| `cbps.TOMenu`     | Time Options menu      |
-| `cbps.TMMenu`     | Teams menu             |
-| `cbps.VCMenu`     | Voice Settings menu    |
-| `cbps.NoClip`     | NoClip permission      |
-| `cbps.Staff`      | Staff-only features    |
+Permissions are defined in `config.cfg`. Here are the main categories:
+
+| Permission              | Description                               |
+| :---------------------- | :---------------------------------------- |
+| `cbps.Everything`       | All permissions (Admin)                   |
+| `cbps.OnlinePlayers`    | Online Players menu (Kick, Ban, Teleport) |
+| `cbps.PlayerOptions`    | Player Options menu (Godmode, etc.)       |
+| `cbps.VehicleOptions`   | Vehicle Options menu                      |
+| `cbps.VehicleSpawner`   | Vehicle Spawner menu                      |
+| `cbps.SavedVehicles`    | Saved Vehicles menu                       |
+| `cbps.PersonalVehicle`  | Personal Vehicle menu                     |
+| `cbps.PlayerAppearance` | Player Appearance menu                    |
+| `cbps.WeaponOptions`    | Weapon Options menu                       |
+| `cbps.WeaponLoadouts`   | Weapon Loadouts menu                      |
+| `cbps.MiscSettings`     | Misc Settings menu                        |
+| `cbps.Recording`        | Recording menu                            |
+| `cbps.TimeOptions`      | Time Options menu                         |
+| `cbps.WeatherOptions`   | Weather Options menu                      |
+| `cbps.Teams`            | Teams menu                                |
+| `cbps.VoiceChat`        | Voice Chat settings                       |
+| `cbps.Staff`            | Staff access (if restricted)              |
 
 ## 🎮 Keybindings
 

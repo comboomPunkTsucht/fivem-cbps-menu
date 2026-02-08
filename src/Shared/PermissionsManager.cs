@@ -416,6 +416,24 @@ namespace CBPSMenu.Shared
                 case "RC":
                     prefix += "Racing";
                     break;
+                case "MS":
+                    prefix += "MiscSettings";
+                    break;
+                case "SV":
+                    prefix += "SavedVehicles";
+                    break;
+                case "PV":
+                    prefix += "PersonalVehicle";
+                    break;
+                case "PA":
+                    prefix += "PlayerAppearance";
+                    break;
+                case "WL":
+                    prefix += "WeaponLoadouts";
+                    break;
+                case "REC":
+                    prefix += "Recording";
+                    break;
                 default:
                     return prefix + name;
             }

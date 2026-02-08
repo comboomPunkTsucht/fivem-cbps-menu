@@ -196,6 +196,12 @@ namespace CBPSMenu.Client
         /// </summary>
         private void CreateMenus()
         {
+            // Prevent duplicate initialization
+            if (mainMenu != null)
+            {
+                return;
+            }
+
             // Create the main menu
             mainMenu = new NativeMenu(Config.MenuTitle, Config.MenuSubtitle);
             ApplyTheme(mainMenu);

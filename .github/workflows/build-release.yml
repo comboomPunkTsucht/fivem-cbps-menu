@@ -103,6 +103,9 @@ jobs:
           # Copy manifest
           cp fxmanifest.lua release/${{ env.MENU_NAME }}/
 
+          #copy config
+          cp config.cfg release/${{ env.MENU_NAME }}/
+
           # Copy documentation
           cp README.md release/${{ env.MENU_NAME }}/ 2>/dev/null || true
           cp LICENSE release/${{ env.MENU_NAME }}/ 2>/dev/null || true

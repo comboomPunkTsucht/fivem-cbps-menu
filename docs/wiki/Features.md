@@ -14,44 +14,44 @@
 
 ## 🎮 Player Options
 
-| Feature           | Permission                    | Description               |
-| ----------------- | ----------------------------- | ------------------------- |
-| Godmode           | `cbps.POGod`                  | Makes you invincible      |
-| Invisibility      | `cbps.POInvisible`            | Become invisible          |
-| Unlimited Stamina | `cbps.POUnlimitedStamina`     | Run forever               |
-| Fast Run/Swim     | `cbps.POFastRun`              | Run/swim super fast       |
-| Super Jump        | `cbps.POSuperjump`            | Jump like a champion      |
-| No Ragdoll        | `cbps.PONoRagdoll`            | Disable ragdoll physics   |
-| Never Wanted      | `cbps.PONeverWanted`          | Disable wanted levels     |
-| Set Wanted        | `cbps.POSetWanted`            | Set specific wanted level |
-| Heal/Max Armor    | `cbps.POMaxHealth`            | Restore full health/armor |
-| Blood Types       | `cbps.POSetBlood`             | 46 blood damage types     |
-| Scenarios         | `cbps.POScenarios`            | 67 ped scenarios          |
-| Auto Pilot        | `cbps.POVehicleAutoPilotMenu` | Drive to waypoint, wander |
+| Feature           | Permission                                | Description               |
+| :---------------- | :---------------------------------------- | :------------------------ |
+| Godmode           | `cbps.PlayerOptions.God`                  | Makes you invincible      |
+| Invisibility      | `cbps.PlayerOptions.Invisible`            | Become invisible          |
+| Unlimited Stamina | `cbps.PlayerOptions.UnlimitedStamina`     | Run forever               |
+| Fast Run/Swim     | `cbps.PlayerOptions.FastRun`              | Run/swim super fast       |
+| Super Jump        | `cbps.PlayerOptions.Superjump`            | Jump like a champion      |
+| No Ragdoll        | `cbps.PlayerOptions.NoRagdoll`            | Disable ragdoll physics   |
+| Never Wanted      | `cbps.PlayerOptions.NeverWanted`          | Disable wanted levels     |
+| Set Wanted        | `cbps.PlayerOptions.SetWanted`            | Set specific wanted level |
+| Heal/Max Armor    | `cbps.PlayerOptions.MaxHealth`            | Restore full health/armor |
+| Blood Types       | `cbps.PlayerOptions.SetBlood`             | 46 blood damage types     |
+| Scenarios         | `cbps.PlayerOptions.Scenarios`            | 67 ped scenarios          |
+| Auto Pilot        | `cbps.PlayerOptions.VehicleAutoPilotMenu` | Drive to waypoint, wander |
 
 ## 🚗 Vehicle Options
 
-| Feature       | Permission                | Description                         |
-| ------------- | ------------------------- | ----------------------------------- |
-| God Mode      | `cbps.VOGod`              | Invincible (engine, visual, wheels) |
-| Repair/Wash   | `cbps.VORepair`           | Repair and clean vehicle            |
-| Doors         | `cbps.VODoors`            | Open/close individual doors         |
-| Windows       | `cbps.VOWindows`          | Roll up/down windows                |
-| Engine        | `cbps.VOToggleEngine`     | Toggle engine, always on            |
-| Speed Limiter | `cbps.VOSpeedLimiter`     | Set max speed                       |
-| Torque/Power  | `cbps.VOTorqueMultiplier` | Boost engine power                  |
-| Tires         | `cbps.VOTires`            | Fix/burst individual tires          |
-| License Plate | `cbps.VOChangePlate`      | Custom plate text/style             |
-| Flip/Delete   | `cbps.VOFlipVehicle`      | Flip upright, delete                |
+| Feature       | Permission                             | Description                         |
+| :------------ | :------------------------------------- | :---------------------------------- |
+| God Mode      | `cbps.VehicleOptions.God`              | Invincible (engine, visual, wheels) |
+| Repair/Wash   | `cbps.VehicleOptions.Repair`           | Repair and clean vehicle            |
+| Doors         | `cbps.VehicleOptions.Doors`            | Open/close individual doors         |
+| Windows       | `cbps.VehicleOptions.Windows`          | Roll up/down windows                |
+| Engine        | `cbps.VehicleOptions.ToggleEngine`     | Toggle engine, always on            |
+| Speed Limiter | `cbps.VehicleOptions.SpeedLimiter`     | Set max speed                       |
+| Torque/Power  | `cbps.VehicleOptions.TorqueMultiplier` | Boost engine power                  |
+| Tires         | `cbps.VehicleOptions.Tires`            | Fix/burst individual tires          |
+| License Plate | `cbps.VehicleOptions.ChangePlate`      | Custom plate text/style             |
+| Flip/Delete   | `cbps.VehicleOptions.FlipVehicle`      | Flip upright, delete                |
 
 ## 🔫 Weapon Options
 
-| Feature        | Permission             | Description                   |
-| -------------- | ---------------------- | ----------------------------- |
-| Spawn Weapons  | `cbps.WPGetAll`        | 170+ weapons in 10 categories |
-| Unlimited Ammo | `cbps.WPUnlimitedAmmo` | Infinite ammunition           |
-| No Reload      | `cbps.WPNoReload`      | Never reload                  |
-| Weapon Tints   | `cbps.WPTints`         | 8 color tints                 |
+| Feature        | Permission                         | Description                   |
+| :------------- | :--------------------------------- | :---------------------------- |
+| Spawn Weapons  | `cbps.WeaponOptions.GetAll`        | 170+ weapons in 10 categories |
+| Unlimited Ammo | `cbps.WeaponOptions.UnlimitedAmmo` | Infinite ammunition           |
+| No Reload      | `cbps.WeaponOptions.NoReload`      | Never reload                  |
+| Weapon Tints   | `cbps.WeaponOptions.Tints`         | 8 color tints                 |
 
 ## 🚙 Vehicle Spawner
 
@@ -85,13 +85,13 @@
 
 ## 🗺️ Misc Settings
 
-| Feature              | Permission                 |
-| -------------------- | -------------------------- |
-| Teleport to Waypoint | `cbps.MSTeleportToWp`      |
-| Teleport Locations   | `cbps.MSTeleportLocations` |
-| Show Coordinates     | `cbps.MSShowCoords`        |
-| Night/Thermal Vision | `cbps.MSNightVision`       |
-| Lock Camera X/Y      | `cbps.MSLockCamX`          |
+| Feature              | Permission                            |
+| :------------------- | :------------------------------------ |
+| Teleport to Waypoint | `cbps.MiscSettings.TeleportToWp`      |
+| Teleport Locations   | `cbps.MiscSettings.TeleportLocations` |
+| Show Coordinates     | `cbps.MiscSettings.ShowCoords`        |
+| Night/Thermal Vision | `cbps.MiscSettings.NightVision`       |
+| Lock Camera X/Y      | `cbps.MiscSettings.LockCamX`          |
 
 ## 📹 Recording
 
@@ -101,12 +101,12 @@
 
 ## 👥 Online Players
 
-| Feature            | Permission        |
-| ------------------ | ----------------- |
-| Teleport to Player | `cbps.OPTeleport` |
-| Summon Player      | `cbps.OPSummon`   |
-| Spectate           | `cbps.OPSpectate` |
-| Kick/Ban           | `cbps.OPKick`     |
+| Feature            | Permission                    |
+| :----------------- | :---------------------------- |
+| Teleport to Player | `cbps.OnlinePlayers.Teleport` |
+| Summon Player      | `cbps.OnlinePlayers.Summon`   |
+| Spectate           | `cbps.OnlinePlayers.Spectate` |
+| Kick/Ban           | `cbps.OnlinePlayers.Kick`     |
 
 ## 🚫 Banned Players (Admin)
 
