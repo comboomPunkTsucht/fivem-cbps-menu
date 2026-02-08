@@ -1,6 +1,7 @@
 using System;
 
 using CitizenFX.Core;
+using CitizenFX.Core.Native;
 
 using LemonUI;
 using LemonUI.Menus;
@@ -37,7 +38,7 @@ namespace CBPSMenu.Client.Menus
                         Notify.Error("Already recording!");
                         return;
                     }
-                    Function.Call((Hash)0xC3AC2FFF9612AC81, 1); // START_RECORDING
+                    StartRecording(1); // 1 = Action replay recording
                     IsRecording = true;
                     Notify.Success("Recording started.");
                 };
@@ -51,7 +52,7 @@ namespace CBPSMenu.Client.Menus
                         Notify.Error("Not currently recording.");
                         return;
                     }
-                    Function.Call((Hash)0xB66D95C9E7D24B1C); // STOP_RECORDING
+                    StopRecording();
                     IsRecording = false;
                     Notify.Success("Recording stopped.");
                 };
@@ -60,7 +61,7 @@ namespace CBPSMenu.Client.Menus
                 var saveRecording = new NativeItem("Save Last Recording", "Save the last recorded clip.");
                 saveRecording.Activated += (s, e) =>
                 {
-                    Function.Call((Hash)0x644546EC5287471B); // STOP_RECORDING_AND_SAVE_CLIP
+                    StopRecordingAndSaveClip();
                     IsRecording = false;
                     Notify.Success("Recording saved.");
                 };
@@ -69,7 +70,7 @@ namespace CBPSMenu.Client.Menus
                 var discardRecording = new NativeItem("~r~Discard Recording", "Discard the current/last recording.");
                 discardRecording.Activated += (s, e) =>
                 {
-                    Function.Call((Hash)0x88BB3507ED41A240); // STOP_RECORDING_AND_DISCARD_CLIP
+                    StopRecordingAndDiscardClip();
                     IsRecording = false;
                     Notify.Info("Recording discarded.");
                 };
@@ -87,7 +88,7 @@ namespace CBPSMenu.Client.Menus
                 {
                     if (IsRecording)
                     {
-                        Function.Call((Hash)0x644546EC5287471B); // STOP_RECORDING_AND_SAVE_CLIP
+                        StopRecordingAndSaveClip();
                         IsRecording = false;
                     }
                     ActivateRockstarEditor();

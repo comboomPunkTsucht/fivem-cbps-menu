@@ -39,37 +39,40 @@ namespace CBPSMenu.Client.Menus
             refreshBtn.Activated += (s, e) => RefreshPlayerList();
             menu.Add(refreshBtn);
 
-            var players = Game.Players;
-            foreach (Player player in players)
+            // Get active player indices
+            int[] playerIds = GetActivePlayers();
+            foreach (int playerId in playerIds)
             {
-                if (player != null)
+                var serverId = GetPlayerServerId(playerId);
+                var playerName = GetPlayerName(playerId);
+                if (!string.IsNullOrEmpty(playerName))
                 {
-                    var playerMenu = CreatePlayerMenu(player);
+                    var playerMenu = CreatePlayerMenuById(playerId, serverId, playerName);
                     playerMenus.Add(playerMenu);
 
-                    var playerBtn = new NativeItem($"[{player.ServerId}] {player.Name}", $"Manage player {player.Name}.") { AltTitle = "→→→" };
+                    var playerBtn = new NativeItem($"[{serverId}] {playerName}", $"Manage player {playerName}.") { AltTitle = "→→→" };
                     menu.Add(playerBtn);
                 }
             }
         }
 
-        private NativeMenu CreatePlayerMenu(Player player)
+        private NativeMenu CreatePlayerMenuById(int playerId, int serverId, string playerName)
         {
-            var playerMenu = new NativeMenu(player.Name, $"Player: {player.Name} (ID: {player.ServerId})");
+            var playerMenu = new NativeMenu(playerName, $"Player: {playerName} (ID: {serverId})");
 
             #region Teleport Options
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPTeleport))
             {
-                var teleportTo = new NativeItem("Teleport To Player", $"Teleport to {player.Name}.");
+                var teleportTo = new NativeItem("Teleport To Player", $"Teleport to {playerName}.");
                 teleportTo.Activated += (s, e) =>
                 {
-                    var targetPed = GetPlayerPed(player.Handle);
+                    var targetPed = GetPlayerPed(playerId);
                     if (targetPed > 0)
                     {
                         var coords = GetEntityCoords(targetPed, true);
-                        SetPedCoordsKeepVehicle(Game.PlayerPed.Handle, coords.X, coords.Y, coords.Z);
-                        Notify.Success($"Teleported to {player.Name}.");
+                        SetPedCoordsKeepVehicle(PlayerPedId(), coords.X, coords.Y, coords.Z);
+                        Notify.Success($"Teleported to {playerName}.");
                     }
                     else
                     {
@@ -81,26 +84,26 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPSummon))
             {
-                var summon = new NativeItem("Summon Player", $"Teleport {player.Name} to you.");
+                var summon = new NativeItem("Summon Player", $"Teleport {playerName} to you.");
                 summon.Activated += (s, e) =>
                 {
-                    BaseScript.TriggerServerEvent("cbps:SummonPlayer", player.ServerId);
-                    Notify.Info($"Summon request sent for {player.Name}.");
+                    BaseScript.TriggerServerEvent("cbps:SummonPlayer", serverId);
+                    Notify.Info($"Summon request sent for {playerName}.");
                 };
                 playerMenu.Add(summon);
             }
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPWaypoint))
             {
-                var setWaypoint = new NativeItem("Set Waypoint to Player", $"Set waypoint to {player.Name}'s location.");
+                var setWaypoint = new NativeItem("Set Waypoint to Player", $"Set waypoint to {playerName}'s location.");
                 setWaypoint.Activated += (s, e) =>
                 {
-                    var targetPed = GetPlayerPed(player.Handle);
+                    var targetPed = GetPlayerPed(playerId);
                     if (targetPed > 0)
                     {
                         var coords = GetEntityCoords(targetPed, true);
                         SetNewWaypoint(coords.X, coords.Y);
-                        Notify.Success($"Waypoint set to {player.Name}.");
+                        Notify.Success($"Waypoint set to {playerName}.");
                     }
                 };
                 playerMenu.Add(setWaypoint);
@@ -112,11 +115,11 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPSpectate))
             {
-                var spectate = new NativeItem("Spectate Player", $"Spectate {player.Name}.");
+                var spectate = new NativeItem("Spectate Player", $"Spectate {playerName}.");
                 spectate.Activated += async (s, e) =>
                 {
-                    var targetPed = GetPlayerPed(player.Handle);
-                    if (targetPed > 0 && targetPed != Game.PlayerPed.Handle)
+                    var targetPed = GetPlayerPed(playerId);
+                    if (targetPed > 0 && targetPed != PlayerPedId())
                     {
                         if (NetworkIsInSpectatorMode())
                         {
@@ -125,10 +128,11 @@ namespace CBPSMenu.Client.Menus
                         }
                         else
                         {
-                            RequestCollisionAtCoord(GetEntityCoords(targetPed, true).X, GetEntityCoords(targetPed, true).Y, GetEntityCoords(targetPed, true).Z);
+                            var coords = GetEntityCoords(targetPed, true);
+                            RequestCollisionAtCoord(coords.X, coords.Y, coords.Z);
                             await BaseScript.Delay(1000);
                             NetworkSetInSpectatorMode(true, targetPed);
-                            Notify.Info($"Spectating {player.Name}. Use this again to stop.");
+                            Notify.Info($"Spectating {playerName}. Use this again to stop.");
                         }
                     }
                     else
@@ -145,10 +149,10 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPIdentifiers))
             {
-                var showIds = new NativeItem("Show Identifiers", $"Display {player.Name}'s identifiers.");
+                var showIds = new NativeItem("Show Identifiers", $"Display {playerName}'s identifiers.");
                 showIds.Activated += (s, e) =>
                 {
-                    BaseScript.TriggerServerEvent("cbps:RequestPlayerIdentifiers", player.ServerId);
+                    BaseScript.TriggerServerEvent("cbps:RequestPlayerIdentifiers", serverId);
                 };
                 playerMenu.Add(showIds);
             }
@@ -159,11 +163,11 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPKill))
             {
-                var killPlayer = new NativeItem("~r~Kill Player", $"Kill {player.Name}.");
+                var killPlayer = new NativeItem("~r~Kill Player", $"Kill {playerName}.");
                 killPlayer.Activated += (s, e) =>
                 {
-                    BaseScript.TriggerServerEvent("cbps:KillPlayer", player.ServerId);
-                    Notify.Info($"Kill request sent for {player.Name}.");
+                    BaseScript.TriggerServerEvent("cbps:KillPlayer", serverId);
+                    Notify.Info($"Kill request sent for {playerName}.");
                 };
                 playerMenu.Add(killPlayer);
             }
@@ -174,14 +178,14 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPKick))
             {
-                var kickPlayer = new NativeItem("~r~Kick Player", $"Kick {player.Name} from the server.");
+                var kickPlayer = new NativeItem("~r~Kick Player", $"Kick {playerName} from the server.");
                 kickPlayer.Activated += async (s, e) =>
                 {
                     var reason = await GetUserInput("Enter kick reason", "Kicked by admin", 100);
                     if (!string.IsNullOrEmpty(reason))
                     {
-                        BaseScript.TriggerServerEvent("cbps:KickPlayer", player.ServerId, reason);
-                        Notify.Success($"Kicked {player.Name}.");
+                        BaseScript.TriggerServerEvent("cbps:KickPlayer", serverId, reason);
+                        Notify.Success($"Kicked {playerName}.");
                     }
                 };
                 playerMenu.Add(kickPlayer);
@@ -189,14 +193,14 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPTempBan))
             {
-                var tempBanPlayer = new NativeItem("~r~Temp Ban Player", $"Temporarily ban {player.Name}.");
+                var tempBanPlayer = new NativeItem("~r~Temp Ban Player", $"Temporarily ban {playerName}.");
                 tempBanPlayer.Activated += async (s, e) =>
                 {
                     var reason = await GetUserInput("Enter ban reason", "Temp banned by admin", 100);
                     if (!string.IsNullOrEmpty(reason))
                     {
-                        BaseScript.TriggerServerEvent("cbps:TempBanPlayer", player.ServerId, reason, 24); // 24 hour ban
-                        Notify.Success($"Temp banned {player.Name} for 24 hours.");
+                        BaseScript.TriggerServerEvent("cbps:TempBanPlayer", serverId, reason, 24);
+                        Notify.Success($"Temp banned {playerName} for 24 hours.");
                     }
                 };
                 playerMenu.Add(tempBanPlayer);
@@ -204,14 +208,14 @@ namespace CBPSMenu.Client.Menus
 
             if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPPermBan))
             {
-                var permBanPlayer = new NativeItem("~r~~h~PERMANENT BAN~h~", $"Permanently ban {player.Name}.");
+                var permBanPlayer = new NativeItem("~r~~h~PERMANENT BAN~h~", $"Permanently ban {playerName}.");
                 permBanPlayer.Activated += async (s, e) =>
                 {
                     var reason = await GetUserInput("Enter permanent ban reason", "Permanently banned by admin", 100);
                     if (!string.IsNullOrEmpty(reason))
                     {
-                        BaseScript.TriggerServerEvent("cbps:PermBanPlayer", player.ServerId, reason);
-                        Notify.Success($"Permanently banned {player.Name}.");
+                        BaseScript.TriggerServerEvent("cbps:PermBanPlayer", serverId, reason);
+                        Notify.Success($"Permanently banned {playerName}.");
                     }
                 };
                 playerMenu.Add(permBanPlayer);
