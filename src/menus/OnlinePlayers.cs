@@ -39,14 +39,17 @@ namespace CBPSMenu.Client.Menus
             refreshBtn.Activated += (s, e) => RefreshPlayerList();
             menu.Add(refreshBtn);
 
-            // Get active player indices
-            int[] playerIds = GetActivePlayers();
-            foreach (int playerId in playerIds)
+            // Use CitizenFX.Core.PlayerList for safer iteration
+            var players = new PlayerList();
+            foreach (Player player in players)
             {
-                var serverId = GetPlayerServerId(playerId);
-                var playerName = GetPlayerName(playerId);
+                int playerId = player.Handle; // Local Handle (int)
+                int serverId = player.ServerId; // Server ID (int)
+                string playerName = player.Name;
+
                 if (!string.IsNullOrEmpty(playerName))
                 {
+                    // Pass explicit types to avoid dynamic binding
                     var playerMenu = CreatePlayerMenuById(playerId, serverId, playerName);
                     playerMenus.Add(playerMenu);
 
