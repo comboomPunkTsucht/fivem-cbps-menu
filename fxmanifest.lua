@@ -7,18 +7,18 @@ version '1.0.0'
 
 -- C# Client script
 client_scripts {
-    'Client/CBPSMenu.net.dll'
+    'CBPSMenu.net.dll'
 }
 
 -- C# Server script
 server_scripts {
-    'Server/CBPSMenu.Server.net.dll'
+    'CBPSMenu.Server.net.dll'
 }
 
 -- Required files
 files {
-    'lib/LemonUI.FiveM.dll',
-    'lib/Newtonsoft.Json.dll',
+    'LemonUI.FiveM.dll',
+    'Newtonsoft.Json.dll',
     'config.json'
 }
 

@@ -93,17 +93,13 @@ jobs:
 
       - name: Prepare release package
         run: |
-          mkdir -p release/${{ env.MENU_NAME }}/Client
-          mkdir -p release/${{ env.MENU_NAME }}/Server
-          mkdir -p release/${{ env.MENU_NAME }}/lib
+          mkdir -p release/${{ env.MENU_NAME }}
 
-          # Copy compiled DLLs
-          cp dist/CBPSMenu.net.dll release/${{ env.MENU_NAME }}/Client/
-          cp dist/CBPSMenu.Server.net.dll release/${{ env.MENU_NAME }}/Server/
-
-          # Copy dependencies
-          cp dist/LemonUI.FiveM.dll release/${{ env.MENU_NAME }}/lib/
-          cp dist/Newtonsoft.Json.dll release/${{ env.MENU_NAME }}/lib/
+          # Copy all DLLs to resource root (required for C# assembly loading)
+          cp dist/CBPSMenu.net.dll release/${{ env.MENU_NAME }}/
+          cp dist/CBPSMenu.Server.net.dll release/${{ env.MENU_NAME }}/
+          cp dist/LemonUI.FiveM.dll release/${{ env.MENU_NAME }}/
+          cp dist/Newtonsoft.Json.dll release/${{ env.MENU_NAME }}/
 
           # Copy config and manifest
           cp config.json release/${{ env.MENU_NAME }}/
