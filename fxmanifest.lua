@@ -5,19 +5,20 @@ author 'comboom.sucht'
 description 'A vMenu-style FiveM menu using LemonUI with Nord theme, pma-voice/radio control, team management, and race features'
 version '1.0.0'
 
--- C# Menu using LemonUI (main entry point)
+-- C# Client script
 client_scripts {
-    'CBPSMenu.net.dll'
+    'Client/CBPSMenu.net.dll'
 }
 
+-- C# Server script
 server_scripts {
-    'CBPSMenu.Server.net.dll'
+    'Server/CBPSMenu.Server.net.dll'
 }
 
--- LemonUI library and Newtonsoft.Json for race system
+-- Required files
 files {
-    'LemonUI.FiveM.dll',
-    'Newtonsoft.Json.dll',
+    'lib/LemonUI.FiveM.dll',
+    'lib/Newtonsoft.Json.dll',
     'config.json'
 }
 

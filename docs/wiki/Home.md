@@ -1,21 +1,29 @@
-# Welcome to the comboom.sucht menu Wiki
+# Welcome to comboom.sucht Menu Wiki
 
-Welcome to the official documentation for **comboom.sucht menu**, the premium administration and roleplay utility for the comboom.sucht community.
+**comboom.sucht menu** is a full vMenu clone for FiveM with 16 menus and 100+ features.
 
 ## 🏁 Quick Links
 
-- **[Installation Guide](Installation)**: Get started with setting up the menu.
-- **[Features Overview](Features)**: Full breakdown of available tools.
-- **[Releases](https://github.com/comboomPunkTsucht/fivem-cbps-menu/releases/latest)**: Download the latest version.
-- **[Race Creator Guide](Guide-Race-Creator)**: Learn how to build and save custom race tracks.
-- **[Radio &amp; Voice Guide](Guide-Radio-Voice)**: Master the communication tools.
+- **[Installation Guide](Installation)** - Get started
+- **[Features Overview](Features)** - All 16 menus and features
+- **[Releases](https://github.com/comboomPunkTsucht/fivem-cbps-menu/releases/latest)** - Download
 
-## 🎨 The Nord Philosophy
+## 📊 Stats
 
-**comboom.sucht menu** is built with the [Nord Color Palette](https://www.nordtheme.com/) at its core. We believe administration tools shouldn't look like generic developer debug windows.
+| Metric      | Value    |
+| ----------- | -------- |
+| Menus       | **16**   |
+| Weapons     | **170+** |
+| Vehicles    | **400+** |
+| Permissions | **100+** |
 
-- **Nord11 (Red)** is used for **Voice** actions, alerting you to your communication status.
-- **Nord14 (Green)** is used for **Online Players**, signifying live activity.
-- **Nord10 (Blue)** is used for standard menu interactions.
+## 🎮 Keybindings
 
-This consistent visual language helps you navigate quickly and intuitively.
+| Key    | Action        |
+| ------ | ------------- |
+| **F1** | Open Menu     |
+| **F2** | Toggle NoClip |
+
+## 🎨 Theme
+
+Built with the [Nord Color Palette](https://www.nordtheme.com/) for a premium look.

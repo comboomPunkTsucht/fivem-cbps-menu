@@ -1,740 +1,580 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Threading.Tasks;
+
 using CitizenFX.Core;
-using CitizenFX.Core.Native;
+using CitizenFX.Core.UI;
+
 using LemonUI;
+using LemonUI.Elements;
 using LemonUI.Menus;
 
-namespace CBPSMenu
+using CBPSMenu.Client.Menus;
+using CBPSMenu.Shared;
+
+using static CitizenFX.Core.Native.API;
+
+namespace CBPSMenu.Client
 {
+    /// <summary>
+    /// Main entry point for comboom.sucht Menu - Full vMenu Clone.
+    /// </summary>
     public class MainMenu : BaseScript
     {
-        private ObjectPool _pool;
-        private NativeMenu _mainMenu;
-        private NativeMenu _playerMenu;
-        private NativeMenu _vehicleMenu;
-        private NativeMenu _weaponsMenu;
-        private NativeMenu _worldMenu;
-        private NativeMenu _settingsMenu;
+        private const string VERSION = "1.0.0";
+        /// <summary>
+        /// The object pool that handles all menus.
+        /// </summary>
+        private readonly ObjectPool pool = new ObjectPool();
 
-        // Player state tracking
-        private bool _godMode = false;
-        private bool _invisible = false;
-        private bool _noclip = false;
-        private bool _superJump = false;
-        private bool _fastRun = false;
-        private bool _infiniteAmmo = false;
-        private bool _noReload = false;
-        private bool _vehicleInvincible = false;
+        /// <summary>
+        /// The main menu instance.
+        /// </summary>
+        private NativeMenu mainMenu;
 
-        // Theme colors
-        private System.Drawing.Color _bannerColor = System.Drawing.Color.FromArgb(255, 0, 120, 215);
+        /// <summary>
+        /// Submenu instances - ALL vMenu menus.
+        /// </summary>
+        private OnlinePlayers onlinePlayersMenu;
+        private PlayerOptions playerOptionsMenu;
+        private VehicleOptions vehicleOptionsMenu;
+        private VehicleSpawner vehicleSpawnerMenu;
+        private WeaponOptions weaponOptionsMenu;
+        private PlayerAppearance playerAppearanceMenu;
+        private WeatherOptions weatherOptionsMenu;
+        private TimeOptions timeOptionsMenu;
+        private MiscSettings miscSettingsMenu;
+        private SavedVehicles savedVehiclesMenu;
+        private PersonalVehicle personalVehicleMenu;
+        private WeaponLoadouts weaponLoadoutsMenu;
+        private Recording recordingMenu;
+        private BannedPlayers bannedPlayersMenu;
+        private TeamsMenu teamsMenu;
+        private VoiceSettings voiceSettingsMenu;
 
+        /// <summary>
+        /// Whether the menu is currently open.
+        /// </summary>
+        public static bool IsMenuOpen => _instance?.mainMenu?.Visible ?? false;
+
+        private static MainMenu _instance;
+
+        // Tick loop state references
+        private PlayerOptions _playerOpts;
+        private VehicleOptions _vehicleOpts;
+        private MiscSettings _miscSettings;
+
+        /// <summary>
+        /// Constructor - initializes the menu system.
+        /// </summary>
         public MainMenu()
         {
-            _pool = new ObjectPool();
-            
-            CreateMainMenu();
-            CreatePlayerMenu();
-            CreateVehicleMenu();
-            CreateWeaponsMenu();
-            CreateWorldMenu();
-            CreateSettingsMenu();
+            _instance = this;
 
+            // Load configuration
+            Config.Load();
+
+            // Register event handlers
+            EventHandlers["cbps:SetPermissions"] += new Action<string>(OnSetPermissions);
+            EventHandlers["onClientResourceStart"] += new Action<string>(OnResourceStart);
+            EventHandlers["cbps:ShowNotification"] += new Action<string, string>(OnShowNotification);
+            EventHandlers["cbps:SummonToPlayer"] += new Action<float, float, float>(OnSummonToPlayer);
+            EventHandlers["cbps:ReceiveBanList"] += new Action<string>(OnReceiveBanList);
+
+            // Register tick handler
             Tick += OnTick;
-            
-            // Register command to open menu
-            API.RegisterCommand("cbps_menu", new Action<int, List<object>, string>((source, args, raw) =>
+            Tick += OnPlayerStateTick;
+
+            Debug.WriteLine("[comboom.sucht Menu] Client initialized - Full vMenu Clone.");
+        }
+
+        /// <summary>
+        /// Called when the resource starts.
+        /// </summary>
+        private void OnResourceStart(string resourceName)
+        {
+            if (GetCurrentResourceName() != resourceName)
             {
-                ToggleMenu();
+                return;
+            }
+
+            // Request permissions from server
+            TriggerServerEvent("cbps:requestPermissions");
+
+            // Register the menu toggle keybind
+            RegisterKeyMapping("cbps_menu_toggle", "Open comboom.sucht Menu", "keyboard", Config.MenuKey);
+            RegisterCommand("cbps_menu_toggle", new Action<int, List<object>, string>((source, args, raw) =>
+            {
+                if (PermissionsManager.ArePermissionsSetup)
+                {
+                    mainMenu.Visible = !mainMenu.Visible;
+                }
             }), false);
 
-            // Register noclip command
-            API.RegisterCommand("cbps_noclip", new Action<int, List<object>, string>((source, args, raw) =>
+            // Register NoClip command
+            RegisterKeyMapping("cbps_noclip", "Toggle NoClip", "keyboard", "F2");
+            RegisterCommand("cbps_noclip", new Action<int, List<object>, string>((source, args, raw) =>
             {
-                ToggleNoclip();
+                if (PermissionsManager.IsAllowed(PermissionsManager.Permission.NoClip))
+                {
+                    Notify.Info("NoClip toggled (placeholder).");
+                }
             }), false);
-
-            // Register reset command
-            API.RegisterCommand("cbps_reset", new Action<int, List<object>, string>((source, args, raw) =>
-            {
-                ResetPlayerState();
-            }), false);
-
-            // Register key mappings
-            API.RegisterKeyMapping("cbps_menu", "Open CBPS Menu", "keyboard", "F1");
-            API.RegisterKeyMapping("cbps_noclip", "Toggle Noclip", "keyboard", "F2");
-            API.RegisterKeyMapping("cbps_reset", "Reset Player State", "keyboard", "F9");
-
-            Debug.WriteLine("[CBPS Menu] Menu initialized successfully!");
         }
 
-        private void CreateMainMenu()
+        /// <summary>
+        /// Called when permissions are received from the server.
+        /// </summary>
+        private void OnSetPermissions(string permissions)
         {
-            _mainMenu = new NativeMenu("CBPS Menu", "Main Menu")
-            {
-                UseMouse = false
-            };
-            _mainMenu.Banner.Color = _bannerColor;
-            _pool.Add(_mainMenu);
+            PermissionsManager.SetPermissions(permissions);
+            CreateMenus();
+            Debug.WriteLine("[comboom.sucht Menu] Permissions set and menus created.");
         }
 
-        private void CreatePlayerMenu()
+        private void OnShowNotification(string type, string message)
         {
-            _playerMenu = new NativeMenu("CBPS Menu", "Player Options")
+            switch (type.ToLower())
             {
-                UseMouse = false
-            };
-            _playerMenu.Banner.Color = _bannerColor;
-            _pool.Add(_playerMenu);
-
-            // Add submenu to main menu
-            var playerSubmenuItem = _mainMenu.AddSubMenu(_playerMenu);
-            playerSubmenuItem.Title = "Player Options";
-            playerSubmenuItem.Description = "Manage your player";
-
-            // Heal Player
-            var healItem = new NativeItem("Heal Player", "Restore health to maximum");
-            healItem.Activated += (sender, args) =>
-            {
-                var playerPed = Game.PlayerPed;
-                playerPed.Health = playerPed.MaxHealth;
-                ShowNotification("~g~Health restored!");
-            };
-            _playerMenu.Add(healItem);
-
-            // Give Armor
-            var armorItem = new NativeItem("Give Armor", "Give full armor");
-            armorItem.Activated += (sender, args) =>
-            {
-                Game.PlayerPed.Armor = 100;
-                ShowNotification("~b~Armor restored!");
-            };
-            _playerMenu.Add(armorItem);
-
-            // God Mode
-            var godModeItem = new NativeCheckboxItem("God Mode", "Toggle invincibility", _godMode);
-            godModeItem.CheckboxChanged += (sender, args) =>
-            {
-                _godMode = godModeItem.Checked;
-                Game.PlayerPed.IsInvincible = _godMode;
-                ShowNotification(_godMode ? "~g~God Mode: ON" : "~r~God Mode: OFF");
-            };
-            _playerMenu.Add(godModeItem);
-
-            // Invisible
-            var invisibleItem = new NativeCheckboxItem("Invisible", "Toggle invisibility", _invisible);
-            invisibleItem.CheckboxChanged += (sender, args) =>
-            {
-                _invisible = invisibleItem.Checked;
-                Game.PlayerPed.IsVisible = !_invisible;
-                ShowNotification(_invisible ? "~g~Invisible: ON" : "~r~Invisible: OFF");
-            };
-            _playerMenu.Add(invisibleItem);
-
-            // Noclip
-            var noclipItem = new NativeCheckboxItem("Noclip", "Toggle noclip mode (Use F2 for quick toggle)", _noclip);
-            noclipItem.CheckboxChanged += (sender, args) =>
-            {
-                _noclip = noclipItem.Checked;
-                ApplyNoclipState();
-            };
-            _playerMenu.Add(noclipItem);
-
-            // Super Jump
-            var superJumpItem = new NativeCheckboxItem("Super Jump", "Toggle super jump", _superJump);
-            superJumpItem.CheckboxChanged += (sender, args) =>
-            {
-                _superJump = superJumpItem.Checked;
-                ShowNotification(_superJump ? "~g~Super Jump: ON" : "~r~Super Jump: OFF");
-            };
-            _playerMenu.Add(superJumpItem);
-
-            // Fast Run
-            var fastRunItem = new NativeCheckboxItem("Fast Run", "Toggle fast run", _fastRun);
-            fastRunItem.CheckboxChanged += (sender, args) =>
-            {
-                _fastRun = fastRunItem.Checked;
-                if (!_fastRun)
-                {
-                    API.SetRunSprintMultiplierForPlayer(Game.Player.Handle, 1.0f);
-                }
-                ShowNotification(_fastRun ? "~g~Fast Run: ON" : "~r~Fast Run: OFF");
-            };
-            _playerMenu.Add(fastRunItem);
-
-            // Teleport to Waypoint
-            var teleportItem = new NativeItem("Teleport to Waypoint", "Teleport to your map waypoint");
-            teleportItem.Activated += async (sender, args) =>
-            {
-                await TeleportToWaypoint();
-            };
-            _playerMenu.Add(teleportItem);
-
-            // Clear Wanted Level
-            var clearWantedItem = new NativeItem("Clear Wanted Level", "Remove all wanted stars");
-            clearWantedItem.Activated += (sender, args) =>
-            {
-                Game.Player.WantedLevel = 0;
-                ShowNotification("~g~Wanted level cleared!");
-            };
-            _playerMenu.Add(clearWantedItem);
-
-            // Suicide
-            var suicideItem = new NativeItem("Suicide", "~r~Kill yourself");
-            suicideItem.Activated += (sender, args) =>
-            {
-                Game.PlayerPed.Health = 0;
-                ShowNotification("~r~You have committed suicide");
-            };
-            _playerMenu.Add(suicideItem);
+                case "success": Notify.Success(message); break;
+                case "error": Notify.Error(message); break;
+                case "info": Notify.Info(message); break;
+                default: Notify.Custom(message); break;
+            }
         }
 
-        private void CreateVehicleMenu()
+        private void OnSummonToPlayer(float x, float y, float z)
         {
-            _vehicleMenu = new NativeMenu("CBPS Menu", "Vehicle Options")
-            {
-                UseMouse = false
-            };
-            _vehicleMenu.Banner.Color = _bannerColor;
-            _pool.Add(_vehicleMenu);
-
-            var vehicleSubmenuItem = _mainMenu.AddSubMenu(_vehicleMenu);
-            vehicleSubmenuItem.Title = "Vehicle Options";
-            vehicleSubmenuItem.Description = "Manage vehicles";
-
-            // Spawn Vehicle
-            var spawnItem = new NativeItem("Spawn Vehicle", "Enter vehicle model name to spawn");
-            spawnItem.Activated += async (sender, args) =>
-            {
-                var input = await GetUserInput("Enter vehicle model", "", 32);
-                if (!string.IsNullOrEmpty(input))
-                {
-                    await SpawnVehicle(input);
-                }
-            };
-            _vehicleMenu.Add(spawnItem);
-
-            // Repair Vehicle
-            var repairItem = new NativeItem("Repair Vehicle", "Fix current vehicle");
-            repairItem.Activated += (sender, args) =>
-            {
-                var vehicle = Game.PlayerPed.CurrentVehicle;
-                if (vehicle != null)
-                {
-                    vehicle.Repair();
-                    ShowNotification("~g~Vehicle repaired!");
-                }
-                else
-                {
-                    ShowNotification("~r~You are not in a vehicle!");
-                }
-            };
-            _vehicleMenu.Add(repairItem);
-
-            // Clean Vehicle
-            var cleanItem = new NativeItem("Clean Vehicle", "Clean current vehicle");
-            cleanItem.Activated += (sender, args) =>
-            {
-                var vehicle = Game.PlayerPed.CurrentVehicle;
-                if (vehicle != null)
-                {
-                    vehicle.DirtLevel = 0f;
-                    ShowNotification("~g~Vehicle cleaned!");
-                }
-                else
-                {
-                    ShowNotification("~r~You are not in a vehicle!");
-                }
-            };
-            _vehicleMenu.Add(cleanItem);
-
-            // Flip Vehicle
-            var flipItem = new NativeItem("Flip Vehicle", "Flip vehicle right-side up");
-            flipItem.Activated += (sender, args) =>
-            {
-                var vehicle = Game.PlayerPed.CurrentVehicle;
-                if (vehicle != null)
-                {
-                    vehicle.PlaceOnGround();
-                    ShowNotification("~g~Vehicle flipped!");
-                }
-                else
-                {
-                    ShowNotification("~r~You are not in a vehicle!");
-                }
-            };
-            _vehicleMenu.Add(flipItem);
-
-            // Vehicle Invincible
-            var invincibleItem = new NativeCheckboxItem("Vehicle Invincible", "Toggle vehicle invincibility", _vehicleInvincible);
-            invincibleItem.CheckboxChanged += (sender, args) =>
-            {
-                _vehicleInvincible = invincibleItem.Checked;
-                var vehicle = Game.PlayerPed.CurrentVehicle;
-                if (vehicle != null)
-                {
-                    vehicle.IsInvincible = _vehicleInvincible;
-                    ShowNotification(_vehicleInvincible ? "~g~Vehicle Invincible: ON" : "~r~Vehicle Invincible: OFF");
-                }
-                else
-                {
-                    ShowNotification("~r~You are not in a vehicle!");
-                    invincibleItem.Checked = false;
-                    _vehicleInvincible = false;
-                }
-            };
-            _vehicleMenu.Add(invincibleItem);
-
-            // Delete Vehicle
-            var deleteItem = new NativeItem("Delete Vehicle", "~r~Delete current vehicle");
-            deleteItem.Activated += (sender, args) =>
-            {
-                var vehicle = Game.PlayerPed.CurrentVehicle;
-                if (vehicle != null)
-                {
-                    vehicle.Delete();
-                    ShowNotification("~r~Vehicle deleted!");
-                }
-                else
-                {
-                    ShowNotification("~r~You are not in a vehicle!");
-                }
-            };
-            _vehicleMenu.Add(deleteItem);
+            SetPedCoordsKeepVehicle(Game.PlayerPed.Handle, x, y, z);
+            Notify.Info("You have been summoned.");
         }
 
-        private void CreateWeaponsMenu()
+        private void OnReceiveBanList(string json)
         {
-            _weaponsMenu = new NativeMenu("CBPS Menu", "Weapon Options")
+            if (bannedPlayersMenu != null)
             {
-                UseMouse = false
-            };
-            _weaponsMenu.Banner.Color = _bannerColor;
-            _pool.Add(_weaponsMenu);
-
-            var weaponsSubmenuItem = _mainMenu.AddSubMenu(_weaponsMenu);
-            weaponsSubmenuItem.Title = "Weapon Options";
-            weaponsSubmenuItem.Description = "Manage weapons";
-
-            // Give All Weapons
-            var giveAllItem = new NativeItem("Give All Weapons", "Give all available weapons");
-            giveAllItem.Activated += (sender, args) =>
-            {
-                foreach (WeaponHash weapon in Enum.GetValues(typeof(WeaponHash)))
+                try
                 {
-                    Game.PlayerPed.Weapons.Give(weapon, 999, false, true);
+                    var list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<BannedPlayerData>>(json);
+                    bannedPlayersMenu.UpdateBanList(list);
                 }
-                ShowNotification("~g~All weapons given!");
-            };
-            _weaponsMenu.Add(giveAllItem);
-
-            // Remove All Weapons
-            var removeAllItem = new NativeItem("Remove All Weapons", "~r~Remove all weapons");
-            removeAllItem.Activated += (sender, args) =>
-            {
-                Game.PlayerPed.Weapons.RemoveAll();
-                ShowNotification("~r~All weapons removed!");
-            };
-            _weaponsMenu.Add(removeAllItem);
-
-            // Infinite Ammo
-            var infiniteAmmoItem = new NativeCheckboxItem("Infinite Ammo", "Toggle infinite ammo", _infiniteAmmo);
-            infiniteAmmoItem.CheckboxChanged += (sender, args) =>
-            {
-                _infiniteAmmo = infiniteAmmoItem.Checked;
-                ShowNotification(_infiniteAmmo ? "~g~Infinite Ammo: ON" : "~r~Infinite Ammo: OFF");
-            };
-            _weaponsMenu.Add(infiniteAmmoItem);
-
-            // No Reload
-            var noReloadItem = new NativeCheckboxItem("No Reload", "Toggle no reload", _noReload);
-            noReloadItem.CheckboxChanged += (sender, args) =>
-            {
-                _noReload = noReloadItem.Checked;
-                ShowNotification(_noReload ? "~g~No Reload: ON" : "~r~No Reload: OFF");
-            };
-            _weaponsMenu.Add(noReloadItem);
+                catch { }
+            }
         }
 
-        private void CreateWorldMenu()
+        /// <summary>
+        /// Creates all menus and submenus.
+        /// </summary>
+        private void CreateMenus()
         {
-            _worldMenu = new NativeMenu("CBPS Menu", "World Options")
-            {
-                UseMouse = false
-            };
-            _worldMenu.Banner.Color = _bannerColor;
-            _pool.Add(_worldMenu);
+            // Create the main menu
+            mainMenu = new NativeMenu(Config.MenuTitle, Config.MenuSubtitle);
+            ApplyTheme(mainMenu);
+            pool.Add(mainMenu);
 
-            var worldSubmenuItem = _mainMenu.AddSubMenu(_worldMenu);
-            worldSubmenuItem.Title = "World Options";
-            worldSubmenuItem.Description = "Change world settings";
-
-            // Weather list
-            var weatherItem = new NativeListItem<string>("Weather", "Change the weather",
-                "EXTRASUNNY", "CLEAR", "CLOUDS", "OVERCAST", "RAIN",
-                "THUNDER", "CLEARING", "NEUTRAL", "SNOW", "BLIZZARD",
-                "SNOWLIGHT", "XMAS");
-            weatherItem.ItemChanged += (sender, args) =>
-            {
-                var weather = weatherItem.SelectedItem;
-                API.SetWeatherTypeNowPersist(weather);
-                ShowNotification($"~b~Weather changed to: {weather}");
-            };
-            _worldMenu.Add(weatherItem);
-
-            // Set Time
-            var timeItem = new NativeItem("Set Time", "Change the time of day");
-            timeItem.Activated += async (sender, args) =>
-            {
-                var input = await GetUserInput("Enter hour (0-23)", "", 2);
-                if (int.TryParse(input, out int hour) && hour >= 0 && hour <= 23)
-                {
-                    API.NetworkOverrideClockTime(hour, 0, 0);
-                    ShowNotification($"~b~Time set to: {hour}:00");
-                }
-                else
-                {
-                    ShowNotification("~r~Invalid hour!");
-                }
-            };
-            _worldMenu.Add(timeItem);
+            // Create submenus based on permissions
+            CreateSubmenus();
         }
 
-        private void CreateSettingsMenu()
+        /// <summary>
+        /// Creates submenus based on player permissions.
+        /// </summary>
+        private void CreateSubmenus()
         {
-            _settingsMenu = new NativeMenu("CBPS Menu", "Settings")
+            // =====================================================
+            // ONLINE PLAYERS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPMenu))
             {
-                UseMouse = false
-            };
-            _settingsMenu.Banner.Color = _bannerColor;
-            _pool.Add(_settingsMenu);
+                onlinePlayersMenu = new OnlinePlayers();
+                var onlineMenu = onlinePlayersMenu.GetMenu();
+                ApplyTheme(onlineMenu);
+                pool.Add(onlineMenu);
 
-            var settingsSubmenuItem = _mainMenu.AddSubMenu(_settingsMenu);
-            settingsSubmenuItem.Title = "Settings";
-            settingsSubmenuItem.Description = "Menu settings";
+                var onlinePlayersItem = mainMenu.AddSubMenu(onlineMenu);
+                onlinePlayersItem.Title = "Online Players";
+                onlinePlayersItem.Description = "Manage online players.";
+            }
 
-            // Theme selection
-            var themeItem = new NativeListItem<string>("Menu Theme", "Change menu color theme",
-                "Blue", "Red", "Green", "Purple", "Orange", "Yellow", "Pink", "Dark");
-            themeItem.ItemChanged += (sender, args) =>
+            // =====================================================
+            // PLAYER OPTIONS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.POMenu))
             {
-                switch (themeItem.SelectedItem)
+                playerOptionsMenu = new PlayerOptions();
+                _playerOpts = playerOptionsMenu;
+                var playerMenu = playerOptionsMenu.GetMenu();
+                ApplyTheme(playerMenu);
+                pool.Add(playerMenu);
+
+                var playerOptionsItem = mainMenu.AddSubMenu(playerMenu);
+                playerOptionsItem.Title = "Player Options";
+                playerOptionsItem.Description = "Godmode, fast run, wanted level, etc.";
+
+                // Add AutoPilot submenu
+                var autoPilotMenu = playerOptionsMenu.GetAutoPilotMenu();
+                if (autoPilotMenu != null)
                 {
-                    case "Blue": _bannerColor = System.Drawing.Color.FromArgb(255, 0, 120, 215); break;
-                    case "Red": _bannerColor = System.Drawing.Color.FromArgb(255, 220, 20, 60); break;
-                    case "Green": _bannerColor = System.Drawing.Color.FromArgb(255, 34, 139, 34); break;
-                    case "Purple": _bannerColor = System.Drawing.Color.FromArgb(255, 138, 43, 226); break;
-                    case "Orange": _bannerColor = System.Drawing.Color.FromArgb(255, 255, 140, 0); break;
-                    case "Yellow": _bannerColor = System.Drawing.Color.FromArgb(255, 255, 215, 0); break;
-                    case "Pink": _bannerColor = System.Drawing.Color.FromArgb(255, 255, 20, 147); break;
-                    case "Dark": _bannerColor = System.Drawing.Color.FromArgb(255, 30, 30, 30); break;
+                    ApplyTheme(autoPilotMenu);
+                    pool.Add(autoPilotMenu);
                 }
-                ApplyThemeToAllMenus();
-                ShowNotification($"~g~Theme changed to: {themeItem.SelectedItem}");
-            };
-            _settingsMenu.Add(themeItem);
+            }
 
-            // Keybindings info
-            var keybindItem = new NativeItem("View Keybindings", "Show current keybindings");
-            keybindItem.Activated += (sender, args) =>
+            // =====================================================
+            // VEHICLE OPTIONS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.VOMenu))
             {
-                ShowNotification("~b~Menu: F1 | Noclip: F2 | Reset: F9");
-            };
-            _settingsMenu.Add(keybindItem);
+                vehicleOptionsMenu = new VehicleOptions();
+                _vehicleOpts = vehicleOptionsMenu;
+                var vehicleMenu = vehicleOptionsMenu.GetMenu();
+                ApplyTheme(vehicleMenu);
+                pool.Add(vehicleMenu);
+
+                var vehicleOptionsItem = mainMenu.AddSubMenu(vehicleMenu);
+                vehicleOptionsItem.Title = "Vehicle Options";
+                vehicleOptionsItem.Description = "Godmode, repair, doors, windows, etc.";
+
+                // Add submenus
+                AddSubmenusIfNotNull(vehicleOptionsMenu.GetGodMenu(), vehicleOptionsMenu.GetDoorsMenu(), vehicleOptionsMenu.GetWindowsMenu());
+            }
+
+            // =====================================================
+            // VEHICLE SPAWNER
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.VSMenu))
+            {
+                vehicleSpawnerMenu = new VehicleSpawner();
+                var spawnerMenu = vehicleSpawnerMenu.GetMenu();
+                ApplyTheme(spawnerMenu);
+                pool.Add(spawnerMenu);
+
+                var vehicleSpawnerItem = mainMenu.AddSubMenu(spawnerMenu);
+                vehicleSpawnerItem.Title = "Vehicle Spawner";
+                vehicleSpawnerItem.Description = "Spawn vehicles by category.";
+            }
+
+            // =====================================================
+            // SAVED VEHICLES
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.SVMenu))
+            {
+                savedVehiclesMenu = new SavedVehicles();
+                var savedMenu = savedVehiclesMenu.GetMenu();
+                ApplyTheme(savedMenu);
+                pool.Add(savedMenu);
+
+                var savedVehiclesItem = mainMenu.AddSubMenu(savedMenu);
+                savedVehiclesItem.Title = "Saved Vehicles";
+                savedVehiclesItem.Description = "Save and spawn your vehicles.";
+            }
+
+            // =====================================================
+            // PERSONAL VEHICLE
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.PVMenu))
+            {
+                personalVehicleMenu = new PersonalVehicle();
+                var personalMenu = personalVehicleMenu.GetMenu();
+                ApplyTheme(personalMenu);
+                pool.Add(personalMenu);
+
+                var personalVehicleItem = mainMenu.AddSubMenu(personalMenu);
+                personalVehicleItem.Title = "Personal Vehicle";
+                personalVehicleItem.Description = "Manage your personal vehicle.";
+            }
+
+            // =====================================================
+            // PLAYER APPEARANCE
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.PAMenu))
+            {
+                playerAppearanceMenu = new PlayerAppearance();
+                var appearanceMenu = playerAppearanceMenu.GetMenu();
+                ApplyTheme(appearanceMenu);
+                pool.Add(appearanceMenu);
+
+                var playerAppearanceItem = mainMenu.AddSubMenu(appearanceMenu);
+                playerAppearanceItem.Title = "Player Appearance";
+                playerAppearanceItem.Description = "Change ped, customize appearance.";
+
+                // Add submenus
+                AddSubmenusIfNotNull(playerAppearanceMenu.GetSpawnPedMenu(), playerAppearanceMenu.GetSavedPedsMenu(), playerAppearanceMenu.GetCustomizationMenu());
+            }
+
+            // =====================================================
+            // WEAPON OPTIONS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.WPMenu))
+            {
+                weaponOptionsMenu = new WeaponOptions();
+                var weaponMenu = weaponOptionsMenu.GetMenu();
+                ApplyTheme(weaponMenu);
+                pool.Add(weaponMenu);
+
+                var weaponOptionsItem = mainMenu.AddSubMenu(weaponMenu);
+                weaponOptionsItem.Title = "Weapon Options";
+                weaponOptionsItem.Description = "Spawn and manage weapons.";
+            }
+
+            // =====================================================
+            // WEAPON LOADOUTS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.WLMenu))
+            {
+                weaponLoadoutsMenu = new WeaponLoadouts();
+                var loadoutsMenu = weaponLoadoutsMenu.GetMenu();
+                ApplyTheme(loadoutsMenu);
+                pool.Add(loadoutsMenu);
+
+                var weaponLoadoutsItem = mainMenu.AddSubMenu(loadoutsMenu);
+                weaponLoadoutsItem.Title = "Weapon Loadouts";
+                weaponLoadoutsItem.Description = "Save and equip weapon loadouts.";
+            }
+
+            // =====================================================
+            // WEATHER OPTIONS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.WOMenu))
+            {
+                weatherOptionsMenu = new WeatherOptions();
+                var weatherMenu = weatherOptionsMenu.GetMenu();
+                ApplyTheme(weatherMenu);
+                pool.Add(weatherMenu);
+
+                var weatherOptionsItem = mainMenu.AddSubMenu(weatherMenu);
+                weatherOptionsItem.Title = "Weather Options";
+                weatherOptionsItem.Description = "Change the weather.";
+            }
+
+            // =====================================================
+            // TIME OPTIONS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.TOMenu))
+            {
+                timeOptionsMenu = new TimeOptions();
+                var timeMenu = timeOptionsMenu.GetMenu();
+                ApplyTheme(timeMenu);
+                pool.Add(timeMenu);
+
+                var timeOptionsItem = mainMenu.AddSubMenu(timeMenu);
+                timeOptionsItem.Title = "Time Options";
+                timeOptionsItem.Description = "Change the time.";
+            }
+
+            // =====================================================
+            // MISC SETTINGS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.MSMenu))
+            {
+                miscSettingsMenu = new MiscSettings();
+                _miscSettings = miscSettingsMenu;
+                var miscMenu = miscSettingsMenu.GetMenu();
+                ApplyTheme(miscMenu);
+                pool.Add(miscMenu);
+
+                var miscSettingsItem = mainMenu.AddSubMenu(miscMenu);
+                miscSettingsItem.Title = "Misc Settings";
+                miscSettingsItem.Description = "Teleport, display, and other settings.";
+            }
+
+            // =====================================================
+            // RECORDING
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.RECMenu))
+            {
+                recordingMenu = new Recording();
+                var recMenu = recordingMenu.GetMenu();
+                ApplyTheme(recMenu);
+                pool.Add(recMenu);
+
+                var recordingItem = mainMenu.AddSubMenu(recMenu);
+                recordingItem.Title = "Recording";
+                recordingItem.Description = "Recording and Rockstar Editor.";
+            }
+
+            // =====================================================
+            // BANNED PLAYERS (Admin Only)
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.OPUnban))
+            {
+                bannedPlayersMenu = new BannedPlayers();
+                var bannedMenu = bannedPlayersMenu.GetMenu();
+                ApplyTheme(bannedMenu);
+                pool.Add(bannedMenu);
+
+                var bannedPlayersItem = mainMenu.AddSubMenu(bannedMenu);
+                bannedPlayersItem.Title = "Banned Players";
+                bannedPlayersItem.Description = "View and manage bans.";
+            }
+
+            // =====================================================
+            // TEAMS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.TMMenu))
+            {
+                teamsMenu = new TeamsMenu();
+                var teamMenu = teamsMenu.GetMenu();
+                ApplyTheme(teamMenu);
+                pool.Add(teamMenu);
+
+                var teamsMenuItem = mainMenu.AddSubMenu(teamMenu);
+                teamsMenuItem.Title = "Teams";
+                teamsMenuItem.Description = "Join a team and communicate via radio.";
+            }
+
+            // =====================================================
+            // VOICE SETTINGS
+            // =====================================================
+            if (PermissionsManager.IsAllowed(PermissionsManager.Permission.VCMenu))
+            {
+                voiceSettingsMenu = new VoiceSettings();
+                var voiceMenu = voiceSettingsMenu.GetMenu();
+                ApplyTheme(voiceMenu);
+                pool.Add(voiceMenu);
+
+                var voiceSettingsItem = mainMenu.AddSubMenu(voiceMenu);
+                voiceSettingsItem.Title = "Voice Settings";
+                voiceSettingsItem.Description = "Configure voice chat and radio settings.";
+            }
+
+            // =====================================================
+            // ABOUT
+            // =====================================================
+            var aboutItem = new NativeItem("About comboom.sucht Menu", "vMenu Clone by comboom.sucht");
+            aboutItem.Description = $"Full vMenu clone with 16+ menus. Version {VERSION}";
+            mainMenu.Add(aboutItem);
         }
 
-        private void ApplyThemeToAllMenus()
+        private void AddSubmenusIfNotNull(params NativeMenu[] menus)
         {
-            _mainMenu.Banner.Color = _bannerColor;
-            _playerMenu.Banner.Color = _bannerColor;
-            _vehicleMenu.Banner.Color = _bannerColor;
-            _weaponsMenu.Banner.Color = _bannerColor;
-            _worldMenu.Banner.Color = _bannerColor;
-            _settingsMenu.Banner.Color = _bannerColor;
+            foreach (var m in menus)
+            {
+                if (m != null)
+                {
+                    ApplyTheme(m);
+                    pool.Add(m);
+                }
+            }
         }
 
+        /// <summary>
+        /// Applies the configured theme to a menu.
+        /// </summary>
+        private void ApplyTheme(NativeMenu menu)
+        {
+            menu.Banner = new ScaledTexture(
+                PointF.Empty,
+                new SizeF(0, 107),
+                Config.BannerDictionary,
+                Config.BannerTexture
+            );
+            menu.Banner.Color = Config.HeaderColor;
+            menu.AccentColor = Config.HighlightColor;
+            menu.DescriptionBackColor = Config.BackgroundColor;
+        }
+
+        /// <summary>
+        /// Tick handler - processes the menu pool.
+        /// </summary>
         private async Task OnTick()
         {
-            _pool.Process();
+            pool.Process();
+            await Delay(0);
+        }
 
-            // Handle noclip movement
-            if (_noclip)
+        /// <summary>
+        /// Player state tick handler - applies persistent settings.
+        /// </summary>
+        private async Task OnPlayerStateTick()
+        {
+            // Super jump
+            if (_playerOpts != null && _playerOpts.PlayerSuperJump)
             {
-                await HandleNoclipMovement();
+                SetSuperJumpThisFrame(Game.Player.Handle);
             }
 
-            // Handle super jump
-            if (_superJump)
+            // Stay in vehicle
+            if (_playerOpts != null && _playerOpts.PlayerStayInVehicle && Game.PlayerPed.IsInVehicle())
             {
-                API.SetSuperJumpThisFrame(Game.Player.Handle);
+                SetPedCanBeDraggedOut(Game.PlayerPed.Handle, false);
             }
 
-            // Handle fast run
-            if (_fastRun)
+            // Vehicle god mode
+            if (_vehicleOpts != null && _vehicleOpts.VehicleGodMode && Game.PlayerPed.IsInVehicle())
             {
-                API.SetRunSprintMultiplierForPlayer(Game.Player.Handle, 1.49f);
-            }
+                var veh = Game.PlayerPed.CurrentVehicle;
+                veh.IsInvincible = true;
+                veh.CanBeVisiblyDamaged = false;
 
-            // Handle infinite ammo
-            if (_infiniteAmmo)
-            {
-                var weapon = Game.PlayerPed.Weapons.Current;
-                if (weapon != null)
+                if (_vehicleOpts.VehicleGodEngine)
                 {
-                    weapon.Ammo = weapon.MaxAmmo;
+                    veh.EngineHealth = 1000f;
+                }
+                if (_vehicleOpts.VehicleGodAutoRepair && veh.HealthFloat < 900f)
+                {
+                    veh.Repair();
                 }
             }
 
-            // Handle no reload
-            if (_noReload)
+            // Keep vehicle clean
+            if (_vehicleOpts != null && _vehicleOpts.VehicleNeverDirty && Game.PlayerPed.IsInVehicle())
             {
-                var weapon = Game.PlayerPed.Weapons.Current;
-                if (weapon != null)
-                {
-                    weapon.AmmoInClip = weapon.MaxAmmoInClip;
-                }
+                Game.PlayerPed.CurrentVehicle.DirtLevel = 0f;
             }
 
-            await Task.FromResult(0);
+            // Engine always on
+            if (_vehicleOpts != null && _vehicleOpts.VehicleEngineAlwaysOn && Game.PlayerPed.IsInVehicle())
+            {
+                SetVehicleEngineOn(Game.PlayerPed.CurrentVehicle.Handle, true, true, false);
+            }
+
+            // No bike helmet
+            if (_vehicleOpts != null && _vehicleOpts.VehicleNoBikeHelmet)
+            {
+                SetPedHelmet(Game.PlayerPed.Handle, false);
+            }
+
+            // Show coordinates
+            if (_miscSettings != null && _miscSettings.ShowCoordinates)
+            {
+                var coords = Game.PlayerPed.Position;
+                DrawText2D(0.5f, 0.0f, $"X: {coords.X:F2}  Y: {coords.Y:F2}  Z: {coords.Z:F2}");
+            }
+
+            // Show location
+            if (_miscSettings != null && _miscSettings.ShowLocation)
+            {
+                var streetName1 = (uint)0;
+                var streetName2 = (uint)0;
+                var coords = Game.PlayerPed.Position;
+                GetStreetNameAtCoord(coords.X, coords.Y, coords.Z, ref streetName1, ref streetName2);
+                var street = GetStreetNameFromHashKey(streetName1);
+                var cross = GetStreetNameFromHashKey(streetName2);
+                var zone = GetLabelText(GetNameOfZone(coords.X, coords.Y, coords.Z));
+
+                var locationText = string.IsNullOrEmpty(cross) ? $"{street}, {zone}" : $"{street} / {cross}, {zone}";
+                DrawText2D(0.5f, 0.025f, locationText);
+            }
+
+            await Delay(0);
         }
 
-        private void ToggleMenu()
+        private void DrawText2D(float x, float y, string text)
         {
-            if (_pool.AreAnyVisible)
-            {
-                _pool.HideAll();
-            }
-            else
-            {
-                _mainMenu.Visible = true;
-            }
-        }
-
-        private void ToggleNoclip()
-        {
-            _noclip = !_noclip;
-            ApplyNoclipState();
-            
-            // Update checkbox if menu is visible
-            foreach (var item in _playerMenu.Items)
-            {
-                if (item is NativeCheckboxItem checkbox && checkbox.Title == "Noclip")
-                {
-                    checkbox.Checked = _noclip;
-                    break;
-                }
-            }
-        }
-
-        private void ApplyNoclipState()
-        {
-            var playerPed = Game.PlayerPed;
-
-            if (_noclip)
-            {
-                playerPed.IsInvincible = true;
-                playerPed.IsVisible = false;
-                API.SetEntityCollision(playerPed.Handle, false, false);
-                API.FreezeEntityPosition(playerPed.Handle, true);
-                ShowNotification("~g~Noclip: ON");
-            }
-            else
-            {
-                // Restore collision first
-                API.SetEntityCollision(playerPed.Handle, true, true);
-                API.FreezeEntityPosition(playerPed.Handle, false);
-                // Restore invincibility based on godMode state
-                playerPed.IsInvincible = _godMode;
-                // Restore visibility based on invisible state
-                playerPed.IsVisible = !_invisible;
-                ShowNotification("~r~Noclip: OFF");
-            }
-        }
-
-        private async Task HandleNoclipMovement()
-        {
-            var playerPed = Game.PlayerPed;
-            var position = playerPed.Position;
-            var speed = 1.0f;
-
-            // Shift for faster movement
-            if (API.IsControlPressed(0, 21))
-            {
-                speed = 5.0f;
-            }
-
-            // W - Forward
-            if (API.IsControlPressed(0, 32))
-            {
-                var forward = API.GetEntityForwardVector(playerPed.Handle);
-                position += new Vector3(forward.X, forward.Y, 0) * speed;
-            }
-
-            // S - Backward
-            if (API.IsControlPressed(0, 33))
-            {
-                var forward = API.GetEntityForwardVector(playerPed.Handle);
-                position -= new Vector3(forward.X, forward.Y, 0) * speed;
-            }
-
-            // A - Rotate left
-            if (API.IsControlPressed(0, 34))
-            {
-                playerPed.Heading += 3.0f;
-            }
-
-            // D - Rotate right
-            if (API.IsControlPressed(0, 35))
-            {
-                playerPed.Heading -= 3.0f;
-            }
-
-            // Q - Down
-            if (API.IsControlPressed(0, 44))
-            {
-                position.Z -= speed;
-            }
-
-            // E - Up
-            if (API.IsControlPressed(0, 38))
-            {
-                position.Z += speed;
-            }
-
-            playerPed.Position = position;
-
-            await Task.FromResult(0);
-        }
-
-        private void ResetPlayerState()
-        {
-            var playerPed = Game.PlayerPed;
-
-            // Reset all toggles
-            _noclip = false;
-            _godMode = false;
-            _invisible = false;
-            _superJump = false;
-            _fastRun = false;
-
-            // Restore player to normal state
-            API.SetEntityCollision(playerPed.Handle, true, true);
-            API.FreezeEntityPosition(playerPed.Handle, false);
-            playerPed.IsInvincible = false;
-            playerPed.IsVisible = true;
-            API.SetRunSprintMultiplierForPlayer(Game.Player.Handle, 1.0f);
-
-            // Update checkboxes in menu
-            foreach (var item in _playerMenu.Items)
-            {
-                if (item is NativeCheckboxItem checkbox)
-                {
-                    checkbox.Checked = false;
-                }
-            }
-
-            ShowNotification("~g~Player state reset!");
-        }
-
-        private async Task TeleportToWaypoint()
-        {
-            var waypoint = World.WaypointPosition;
-            if (waypoint == Vector3.Zero)
-            {
-                ShowNotification("~r~No waypoint set!");
-                return;
-            }
-
-            var playerPed = Game.PlayerPed;
-            
-            // Try to get ground Z
-            float groundZ = 0f;
-            bool found = false;
-            
-            for (float z = 1000f; z >= 0f && !found; z -= 25f)
-            {
-                var testPos = new Vector3(waypoint.X, waypoint.Y, z);
-                API.RequestCollisionAtCoord(testPos.X, testPos.Y, testPos.Z);
-                await Delay(50);
-                
-                float resultZ = 0f;
-                if (API.GetGroundZFor_3dCoord(testPos.X, testPos.Y, testPos.Z, ref resultZ, false))
-                {
-                    groundZ = resultZ;
-                    found = true;
-                }
-            }
-
-            if (!found)
-            {
-                groundZ = waypoint.Z;
-            }
-
-            playerPed.Position = new Vector3(waypoint.X, waypoint.Y, groundZ + 1f);
-            ShowNotification("~g~Teleported to waypoint!");
-        }
-
-        private async Task SpawnVehicle(string modelName)
-        {
-            var model = new Model(modelName);
-
-            if (!model.IsValid || !model.IsVehicle)
-            {
-                ShowNotification($"~r~Invalid vehicle model: {modelName}");
-                return;
-            }
-
-            await model.Request(10000);
-
-            if (!model.IsLoaded)
-            {
-                ShowNotification("~r~Failed to load vehicle model!");
-                return;
-            }
-
-            var playerPed = Game.PlayerPed;
-            var position = playerPed.Position + playerPed.ForwardVector * 5f;
-            var heading = playerPed.Heading;
-
-            var vehicle = await World.CreateVehicle(model, position, heading);
-            
-            if (vehicle != null)
-            {
-                playerPed.SetIntoVehicle(vehicle, VehicleSeat.Driver);
-                ShowNotification($"~g~Vehicle spawned: {modelName}");
-            }
-            else
-            {
-                ShowNotification("~r~Failed to spawn vehicle!");
-            }
-
-            model.MarkAsNoLongerNeeded();
-        }
-
-        private async Task<string> GetUserInput(string windowTitle, string defaultText, int maxLength)
-        {
-            API.DisplayOnscreenKeyboard(1, windowTitle, "", defaultText, "", "", "", maxLength);
-
-            while (API.UpdateOnscreenKeyboard() == 0)
-            {
-                await Delay(0);
-            }
-
-            if (API.UpdateOnscreenKeyboard() == 1)
-            {
-                return API.GetOnscreenKeyboardResult();
-            }
-
-            return null;
-        }
-
-        private void ShowNotification(string message)
-        {
-            API.SetNotificationTextEntry("STRING");
-            API.AddTextComponentString(message);
-            API.DrawNotification(false, true);
+            SetTextFont(0);
+            SetTextProportional(true);
+            SetTextScale(0.0f, 0.35f);
+            SetTextColour(255, 255, 255, 255);
+            SetTextDropshadow(0, 0, 0, 0, 255);
+            SetTextEdge(1, 0, 0, 0, 255);
+            SetTextDropShadow();
+            SetTextOutline();
+            SetTextCentre(true);
+            SetTextEntry("STRING");
+            AddTextComponentString(text);
+            DrawText(x, y);
         }
     }
 }

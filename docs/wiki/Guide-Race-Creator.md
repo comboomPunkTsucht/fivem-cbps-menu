@@ -1,40 +1,80 @@
-# Guide: Race Creator
+# Race Creator Guide
 
-The **Race Creator** allows you to build, save, and share custom race tracks directly within the game. All races are synchronized with the server, meaning anyone can join your lobby once it's created.
+> [!NOTE]
+> The Race Creator feature is currently under development and will be available in a future update.
 
-## 📝 Creating a New Race
+This guide explains how to create and manage custom race tracks.
 
-1. **Open the Menu**: Press `F1` (default) to open the comboom.sucht menu.
-2. **Navigate**: Go to `Race Options` -> `Race Creator`.
-3. **Start Creation**: Select `Create New Race`. You are now in Creator Mode.
+## 🏁 Overview
 
-## 📍 Adding Checkpoints
+The Race Creator allows you to:
 
-1. Drive to your desired starting position.
-2. Select **Add Checkpoint** in the menu.
-   - A **Yellow Blip** will appear on the map and in the world marking the checkpoint.
-3. Drive to the next point and repeat.
-   - _Tip_: Place checkpoints at corners and key intersections to guide racers clearly.
+- Place checkpoints to define a track
+- Save tracks to the server
+- Create race lobbies for multiplayer races
+- Track finish times and positions
 
-## 💾 Saving Your Track
+## 📍 Creating a Race Track
 
-1. Once you've placed all checkpoints, scroll down to **Save Race**.
-2. Enter a unique **Name** for your track when prompted.
-3. Your race is now saved to `cbps_races.json` on the server!
+_(Coming Soon)_
 
-## 🏁 Starting a Race
+1. Open menu → **Race Options** → **Race Creator**
+2. Navigate to where you want the first checkpoint
+3. Select **Add Checkpoint** to place it
+4. Continue adding checkpoints along your route
+5. Add a final checkpoint as the finish line
+6. Select **Save Track** and enter a name
 
-1. Go to `Race Options` -> `Saved Races`.
-2. Select your custom track from the list.
-3. Choose **Create Lobby**.
-4. Other players can now join via `Race Options` -> `Join Race`.
-5. Once everyone is ready, select **Start Race**.
-   - A 5-second countdown will begin for all participants.
-   - Good luck!
+## 🎮 Starting a Race
 
-## ⚙️ Technical Details
+_(Coming Soon)_
 
-Races are stored in JSON format on the server side:
+1. Open menu → **Race Options** → **Race Lobby**
+2. Select a saved track
+3. Select **Create Lobby**
+4. Wait for players to join
+5. Select **Start Race** to begin countdown
 
-- **File**: `server/cbps_races.json`
-- **Backup**: It is recommended to backup this file if you possess many custom tracks.
+## ⚙️ Configuration
+
+Race settings in `config.json`:
+
+```json
+{
+  "racing": {
+    "checkpointModel": "prop_mp_cone_01",
+    "finishModel": "prop_mp_cone_02",
+    "countdownSeconds": 3
+  }
+}
+```
+
+## 🔑 Required Permissions
+
+| Permission                | Description          |
+| ------------------------- | -------------------- |
+| `cbps.Racing.Menu`        | Access to race menu  |
+| `cbps.Racing.CreateTrack` | Create race tracks   |
+| `cbps.Racing.EditTrack`   | Edit existing tracks |
+| `cbps.Racing.DeleteTrack` | Delete tracks        |
+| `cbps.Racing.JoinRace`    | Join race lobbies    |
+| `cbps.Racing.StartRace`   | Start races          |
+
+## 📁 Data Storage
+
+Race tracks are saved to `races.json` on the server:
+
+```json
+{
+  "tracks": [
+    {
+      "name": "Airport Circuit",
+      "author": "player123",
+      "checkpoints": [
+        { "x": -1000, "y": -2500, "z": 14 },
+        { "x": -1050, "y": -2600, "z": 14 }
+      ]
+    }
+  ]
+}
+```

@@ -1,24 +1,23 @@
 name: Build and Release
 
 on:
-  # Trigger on PRs merged to release branch
+  push:
+    branches:
+      - main
+      - release
   pull_request:
     types: [closed]
     branches:
       - release
-      - release/*
       - main
-      - main/*
-  # Also allow manual trigger
-  push:
-    branches:
-      - main
-      - main/*
   workflow_dispatch:
+
+env:
+  MENU_NAME: "comboom.sucht-menu"
+  VERSION: "1.0.0"
 
 jobs:
   build:
-    # Only run if PR was merged (not just closed) or if manually triggered
     if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
@@ -39,24 +38,19 @@ jobs:
       - name: Determine version
         id: version
         run: |
-          BASE_VERSION="${{ steps.date.outputs.date }}"
+          BASE_VERSION="${{ env.VERSION }}"
+          DATE_VERSION="${{ steps.date.outputs.date }}"
 
-          # Check if running on main branch
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # Pre-release: ALWAYS include timestamp to ensure uniqueness per commit
-            # Format: YYYY.MM.DD-HHMMSS-pre
-            echo "version=${BASE_VERSION}-${{ steps.timestamp.outputs.timestamp }}-pre" >> $GITHUB_OUTPUT
+            # Pre-release with timestamp
+            echo "version=${BASE_VERSION}-${DATE_VERSION}-${{ steps.timestamp.outputs.timestamp }}-pre" >> $GITHUB_OUTPUT
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
           else
             # Stable release
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
-
-            # Check if a release with this date already exists
             if gh release view "v${BASE_VERSION}" > /dev/null 2>&1; then
-              # Version exists, add timestamp
-              echo "version=${BASE_VERSION}-${{ steps.timestamp.outputs.timestamp }}" >> $GITHUB_OUTPUT
+              echo "version=${BASE_VERSION}-${DATE_VERSION}" >> $GITHUB_OUTPUT
             else
-              # Version doesn't exist, use base version
               echo "version=${BASE_VERSION}" >> $GITHUB_OUTPUT
             fi
           fi
@@ -66,66 +60,82 @@ jobs:
       - name: Update fxmanifest version
         run: |
           sed -i "s/^version '.*'/version '${{ steps.version.outputs.version }}'/" fxmanifest.lua
+          sed -i "s/^<Version>.*<\/Version>/<Version>${{ steps.version.outputs.version }}<\/Version>/" src/CBPSMenu.csproj
+          sed -i "s/^<Version>.*<\/Version>/<Version>${{ steps.version.outputs.version }}<\/Version>/" src/CBPSMenu.Server/CBPSMenu.Server.csproj
+          sed -i "s/^<PackageVersion>.*<\/PackageVersion>/<PackageVersion>${{ steps.version.outputs.version }}<\/PackageVersion>/" src/CBPSMenu.csproj
+          sed -i "s/^<PackageVersion>.*<\/PackageVersion>/<PackageVersion>${{ steps.version.outputs.version }}<\/PackageVersion>/" src/CBPSMenu.Server/CBPSMenu.Server.csproj
+          sed -i "s/^<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>${{ steps.version.outputs.version }}<\/AssemblyVersion>/" src/CBPSMenu.csproj
+          sed -i "s/^<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>${{ steps.version.outputs.version }}<\/AssemblyVersion>/" src/CBPSMenu.Server/CBPSMenu.Server.csproj
+          sed -i "s/^<FileVersion>.*<\/FileVersion>/<FileVersion>${{ steps.version.outputs.version }}<\/FileVersion>/" src/CBPSMenu.csproj
+          sed -i "s/^<FileVersion>.*<\/FileVersion>/<FileVersion>${{ steps.version.outputs.version }}<\/FileVersion>/" src/CBPSMenu.Server/CBPSMenu.Server.csproj
+          sed -i "s/^<InformationalVersion>.*<\/InformationalVersion>/<InformationalVersion>${{ steps.version.outputs.version }}<\/InformationalVersion>/" src/CBPSMenu.csproj
+          sed -i "s/^<InformationalVersion>.*<\/InformationalVersion>/<InformationalVersion>${{ steps.version.outputs.version }}<\/InformationalVersion>/" src/CBPSMenu.Server/CBPSMenu.Server.csproj
+          sed -i "s/^<Description>.*<\/Description>/<Description>${{ steps.version.outputs.version }}<\/Description>/" src/CBPSMenu.csproj
+          sed -i "s/^<Description>.*<\/Description>/<Description>${{ steps.version.outputs.version }}<\/Description>/" src/CBPSMenu.Server/CBPSMenu.Server.csproj
+          sed -i "s/^VERSION = '.*'/VERSION = '${{ steps.version.outputs.version }}'/" src/MainMenu.cs
+
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.x.x'
+          dotnet-version: '9.x'
 
       - name: Restore dependencies
         run: |
           dotnet restore src/CBPSMenu.csproj
           dotnet restore src/CBPSMenu.Server/CBPSMenu.Server.csproj
 
-      - name: Build
-        run: |
-          dotnet build src/CBPSMenu.csproj -c Release --no-restore
-          dotnet build src/CBPSMenu.Server/CBPSMenu.Server.csproj -c Release --no-restore
+      - name: Build Client
+        run: dotnet build src/CBPSMenu.csproj -c Release --no-restore -o dist/
 
-
+      - name: Build Server
+        run: dotnet build src/CBPSMenu.Server/CBPSMenu.Server.csproj -c Release --no-restore -o dist/
 
       - name: Prepare release package
         run: |
-          mkdir -p release/fivem-cbps-menu
+          mkdir -p release/${{ env.MENU_NAME }}
 
           # Copy compiled DLLs
-          cp dist/CBPSMenu.net.dll release/fivem-cbps-menu/
-          cp dist/CBPSMenu.Server.net.dll release/fivem-cbps-menu/
+          cp dist/CBPSMenu.net.dll release/${{ env.MENU_NAME }}/
+          cp dist/CBPSMenu.Server.net.dll release/${{ env.MENU_NAME }}/
 
-          # Copy LemonUI
-          cp dist/LemonUI.FiveM.dll release/fivem-cbps-menu/
+          # Copy dependencies
+          cp dist/LemonUI.FiveM.dll release/${{ env.MENU_NAME }}/
+          cp dist/Newtonsoft.Json.dll release/${{ env.MENU_NAME }}/
 
-          # Copy Dependencies
-          cp dist/Newtonsoft.Json.dll release/fivem-cbps-menu/
+          # Copy config and manifest
+          cp config.json release/${{ env.MENU_NAME }}/
+          cp fxmanifest.lua release/${{ env.MENU_NAME }}/
 
-          # Copy Config and Manifest (Manifest has been updated by sed)
-          cp config.json release/fivem-cbps-menu/
-          cp fxmanifest.lua release/fivem-cbps-menu/
-
-          # Copy documentation - UPDATED: Point to Wiki docs if local MDs are missing
-          cp README.md release/fivem-cbps-menu/ || true
-          cp docs/wiki/Installation.md release/fivem-cbps-menu/INSTALLATION.md || true
-          cp LICENSE release/fivem-cbps-menu/ || true
+          # Copy documentation
+          cp README.md release/${{ env.MENU_NAME }}/ 2>/dev/null || true
+          cp LICENSE release/${{ env.MENU_NAME }}/ 2>/dev/null || true
 
           # Create zip
           cd release
-          zip -r ../fivem-cbps-menu.zip fivem-cbps-menu
+          zip -r ../${{ env.MENU_NAME }}.zip ${{ env.MENU_NAME }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: Release ${{ steps.version.outputs.version }}
+          name: comboom.sucht Menu v${{ steps.version.outputs.version }}
           body: |
-            ## CBPS Menu Release
+            ## comboom.sucht Menu - Full vMenu Clone
 
             **Version:** ${{ steps.version.outputs.version }}
             **Build:** ${{ github.sha }}
 
+            ### Features
+            - 16 complete menus (PlayerOptions, VehicleOptions, WeaponOptions, etc.)
+            - 170+ weapons, 400+ vehicles, 67 scenarios
+            - Full permission system with 100+ permissions
+            - pma-voice integration for teams/radio
+
             ### Installation
-            1. Extract `fivem-cbps-menu.zip` to your server's `resources` folder
-            2. Add `ensure fivem-cbps-menu` to your `server.cfg`
-            3. Make sure you have `pma-voice` and `pma-radio` installed (required dependencies)
+            1. Extract `${{ env.MENU_NAME }}.zip` to your server's `resources` folder
+            2. Add `ensure ${{ env.MENU_NAME }}` to your `server.cfg`
+            3. Configure permissions via ACE
 
             ### Dependencies
             - [pma-voice](https://github.com/AvarianKnight/pma-voice)
@@ -134,14 +144,11 @@ jobs:
             ### Keybindings
             - **F1** - Open Menu
             - **F2** - Toggle Noclip
-            - **F9** - Reset Player State (emergency)
 
             ### Changes
             ${{ github.event.pull_request.title || github.event.head_commit.message || 'Manual build' }}
-
-            ${{ github.event.pull_request.body || '' }}
           files: |
-            fivem-cbps-menu.zip
+            ${{ env.MENU_NAME }}.zip
           draft: false
           prerelease: ${{ steps.version.outputs.is_prerelease }}
         env:
@@ -150,5 +157,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fivem-cbps-menu
-          path: release/fivem-cbps-menu/
+          name: ${{ env.MENU_NAME }}
+          path: release/${{ env.MENU_NAME }}/

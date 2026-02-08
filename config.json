@@ -1,121 +1,30 @@
 {
-  "MenuSettings": {
-    "MenuKey": "F1",
-    "MenuTitle": "comboom.sucht Menu"
+  "menuTitle": "comboom.sucht Menu",
+  "menuSubtitle": "Server Menu",
+  "menuKey": "F1",
+  "theme": {
+    "headerColor": { "r": 94, "g": 129, "b": 172, "a": 255 },
+    "highlightColor": { "r": 136, "g": 192, "b": 208, "a": 255 },
+    "backgroundColor": { "r": 46, "g": 52, "b": 64, "a": 200 },
+    "textColor": { "r": 236, "g": 239, "b": 244, "a": 255 }
   },
-  "PermissionSettings": {
-    "AdminOnly": false,
-    "Admins": []
+  "bannerTexture": {
+    "dictionary": "commonmenu",
+    "texture": "interaction_bgd"
   },
-  "Keybinds": {
-    "OpenMenu": {
-      "Key": "F1",
-      "Controller": "BACK",
-      "Description": "Open comboom.sucht Menu"
-    },
-    "VoiceRange": {
-      "Key": "LMENU",
-      "Controller": "DPAD_DOWN",
-      "Description": "Cycle Voice Range"
-    },
-    "Noclip": {
-      "Key": "F2",
-      "Controller": null,
-      "Description": "Toggle Noclip (if enabled)"
-    }
+  "teams": {
+    "Team A": { "frequency": 100, "color": "#BF616A" },
+    "Team B": { "frequency": 200, "color": "#A3BE8C" },
+    "Team C": { "frequency": 300, "color": "#EBCB8B" },
+    "Team D": { "frequency": 400, "color": "#B48EAD" }
   },
-  "Controller": {
-    "Enabled": true,
-    "NavigateUp": "DPAD_UP",
-    "NavigateDown": "DPAD_DOWN",
-    "NavigateLeft": "DPAD_LEFT",
-    "NavigateRight": "DPAD_RIGHT",
-    "Select": "A",
-    "Back": "B",
-    "OpenMenu": "BACK"
+  "voiceSettings": {
+    "defaultProximity": 15.0,
+    "enableRadioByDefault": true
   },
-  "ThemeSettings": {
-    "DefaultTheme": "blue",
-    "AllowThemeChange": true,
-    "AllowCustomThemes": true,
-    "Themes": {
-      "blue": {
-        "Name": "Blue",
-        "Banner": { "R": 0, "G": 120, "B": 215, "A": 255 },
-        "Highlight": { "R": 0, "G": 120, "B": 215, "A": 255 },
-        "TextColor": { "R": 255, "G": 255, "B": 255, "A": 255 }
-      },
-      "red": {
-        "Name": "Red",
-        "Banner": { "R": 220, "G": 20, "B": 60, "A": 255 },
-        "Highlight": { "R": 220, "G": 20, "B": 60, "A": 255 },
-        "TextColor": { "R": 255, "G": 255, "B": 255, "A": 255 }
-      },
-      "green": {
-        "Name": "Green",
-        "Banner": { "R": 34, "G": 139, "B": 34, "A": 255 },
-        "Highlight": { "R": 34, "G": 139, "B": 34, "A": 255 },
-        "TextColor": { "R": 255, "G": 255, "B": 255, "A": 255 }
-      },
-      "nord": {
-        "Name": "Nord",
-        "Banner": { "R": 46, "G": 52, "B": 64, "A": 255 },
-        "Highlight": { "R": 136, "G": 192, "B": 208, "A": 255 },
-        "TextColor": { "R": 236, "G": 239, "B": 244, "A": 255 }
-      }
-    }
-  },
-  "VMenu": {
-    "PlayerOptions": true,
-    "VehicleSpawner": true,
-    "VehicleOptions": true,
-    "WeaponOptions": true,
-    "TimeWeatherOptions": true,
-    "WorldOptions": true,
-    "MiscSettings": true
-  },
-  "Voice": {
-    "Enabled": true,
-    "DefaultRange": 5.0,
-    "Ranges": [ 3.0, 5.0, 10.0, 15.0, 20.0, 30.0 ],
-    "ShowUI": true
-  },
-  "Radio": {
-    "Enabled": true,
-    "MaxFrequency": 999.9,
-    "MinFrequency": 1.0
-  },
-  "Team": {
-    "Enabled": true,
-    "MaxTeamSize": 8
-  },
-  "Race": {
-    "Enabled": true,
-    "MaxCheckpoints": 20,
-    "CheckpointRadius": 10.0,
-    "CountdownTime": 5,
-    "ShowLeaderboard": true,
-    "SaveRaces": true,
-    "RaceSaveFile": "cbps_races.json"
-  },
-  "VehicleCategories": [
-    {
-      "Name": "Super",
-      "Vehicles": [ "adder", "autarch", "banshee2", "bullet", "cheetah", "cyclone", "entityxf", "fmj", "gp1", "infernus", "nero", "osiris", "penetrator", "reaper", "t20", "taipan", "tempesta", "turismor", "tyrus", "vacca", "visione", "voltic", "xa21", "zentorno" ]
-    },
-    {
-      "Name": "Sports",
-      "Vehicles": [ "alpha", "banshee", "bestiagts", "blista2", "buffalo", "buffalo2", "buffalo3", "carbonizzare", "comet2", "comet3", "coquette", "elegy", "elegy2", "feltzer2", "furoregt", "fusilade", "futo", "jester", "jester2", "khamelion", "kuruma", "lynx", "massacro", "neon", "ninef", "ninef2", "pariah", "penumbra", "raiden", "rapidgt", "rapidgt2", "revolter", "ruston", "schafter3", "schafter4", "schafter5", "schwarzer", "sentinel3", "seven70", "specter", "specter2", "streiter", "sultan", "surano", "tampa2", "tropos", "verlierer2" ]
-    }
-  ],
-  "WeaponCategories": [
-    {
-      "Name": "Melee",
-      "Weapons": [ "WEAPON_KNIFE", "WEAPON_NIGHTSTICK", "WEAPON_HAMMER", "WEAPON_BAT", "WEAPON_GOLFCLUB", "WEAPON_CROWBAR", "WEAPON_BOTTLE", "WEAPON_DAGGER", "WEAPON_HATCHET", "WEAPON_KNUCKLE", "WEAPON_MACHETE", "WEAPON_FLASHLIGHT", "WEAPON_SWITCHBLADE", "WEAPON_POOLCUE", "WEAPON_WRENCH" ]
-    },
-    {
-      "Name": "Handguns",
-      "Weapons": [ "WEAPON_PISTOL", "WEAPON_COMBATPISTOL", "WEAPON_APPISTOL", "WEAPON_PISTOL50", "WEAPON_SNSPISTOL", "WEAPON_HEAVYPISTOL", "WEAPON_VINTAGEPISTOL", "WEAPON_MARKSMANPISTOL", "WEAPON_REVOLVER", "WEAPON_DOUBLEACTION" ]
-    }
-  ]
+  "racing": {
+    "checkpointModel": "prop_mp_cone_01",
+    "finishModel": "prop_mp_cone_02",
+    "countdownSeconds": 3
+  }
 }

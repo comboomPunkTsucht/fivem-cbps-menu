@@ -1,308 +1,412 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+
 using CitizenFX.Core;
-using CitizenFX.Core.Native;
+
+using static CitizenFX.Core.Native.API;
 
 namespace CBPSMenu.Shared
 {
-  /// <summary>
-  /// Manages ACE-based permissions for menu access control
-  /// Simplified version based on vMenu's PermissionsManager
-  /// Uses server-side permission checks via events
-  /// </summary>
-  public static class PermissionsManager
-  {
-    #region Permission Enum
-
-    /// <summary>
-    /// All available permissions in the menu system
-    /// </summary>
-    public enum Permission
+    public static class PermissionsManager
     {
-      // Global Permissions
-      Everything,
-      Staff,
-      NoClip,
-
-      // Online Players Menu
-      OPMenu,
-      OPAll,
-      OPTeleport,
-      OPSummon,
-      OPSpectate,
-      OPKill,
-      OPKick,
-      OPBan,
-
-      // Player Options
-      POMenu,
-      POAll,
-      POGod,
-      POInvisible,
-      POFastRun,
-      POSuperjump,
-      PONeverWanted,
-
-      // Vehicle Options
-      VOMenu,
-      VOAll,
-      VOGod,
-      VORepair,
-      VOSpawn,
-
-      // Weapon Options
-      WPMenu,
-      WPAll,
-      WPSpawn,
-      WPUnlimitedAmmo,
-
-      // World Options
-      WOMenu,
-      WOAll,
-      WOSetTime,
-      WOSetWeather,
-
-      // Voice Options
-      VCMenu,
-      VCAll,
-    }
-
-    #endregion
-
-#if !SERVER
-    #region Permission Cache
-
-    /// <summary>
-    /// Cached permissions from server
-    /// </summary>
-    private static Dictionary<Permission, bool> _cachedPermissions = new Dictionary<Permission, bool>();
-
-    /// <summary>
-    /// Whether permissions have been loaded from server
-    /// </summary>
-    public static bool PermissionsLoaded { get; private set; } = false;
-
-    #endregion
-
-    #region Permission Checking
-
-    /// <summary>
-    /// Check if the current player is allowed a specific permission
-    /// Uses cached permissions from server
-    /// </summary>
-    /// <param name="permission">The permission to check</param>
-    /// <returns>True if allowed, false otherwise</returns>
-    public static bool IsAllowed(Permission permission)
-    {
-      try
-      {
-        // If permissions haven't been loaded yet, allow by default (server will validate)
-        if (!PermissionsLoaded)
+        public enum Permission
         {
-          // Request permissions from server if not loaded
-          RequestPermissions();
-          return true; // Default to true, server will validate on action
+            // Global
+            Everything,
+            DontKickMe,
+            DontBanMe,
+            NoClip,
+            Staff,
+
+            // Online Players
+            OPMenu,
+            OPAll,
+            OPTeleport,
+            OPWaypoint,
+            OPSpectate,
+            OPSendMessage,
+            OPIdentifiers,
+            OPSummon,
+            OPKill,
+            OPKick,
+            OPPermBan,
+            OPTempBan,
+            OPUnban,
+
+            // Player Options
+            POMenu,
+            POAll,
+            POGod,
+            POInvisible,
+            POFastRun,
+            POFastSwim,
+            POSuperjump,
+            PONoRagdoll,
+            PONeverWanted,
+            POSetWanted,
+            POClearBlood,
+            POIgnored,
+            POStayInVehicle,
+            POMaxHealth,
+            POMaxArmor,
+            POCleanPlayer,
+            PODryPlayer,
+            POWetPlayer,
+            POFreeze,
+            POScenarios,
+            POUnlimitedStamina,
+            POSetBlood,
+            POVehicleAutoPilotMenu,
+
+            // Vehicle Options
+            VOMenu,
+            VOAll,
+            VOGod,
+            VOKeepClean,
+            VORepair,
+            VOWash,
+            VOEngine,
+            VODestroyEngine,
+            VOSpeedLimiter,
+            VOChangePlate,
+            VOColors,
+            VOFreeze,
+            VOInvisible,
+            VOFlip,
+            VODelete,
+            VOFixOrDestroyTires,
+            VODoors,
+            VOWindows,
+            VOLights,
+            VOAlarm,
+            VOCycleSeats,
+            VOBikeSeatbelt,
+            VONoSiren,
+            VONoHelmet,
+            VOTorqueMultiplier,
+            VOPowerMultiplier,
+
+            // Vehicle Spawner
+            VSMenu,
+            VSAll,
+            VSSpawnByName,
+            VSAddon,
+            VSCompacts,
+            VSSedans,
+            VSSUVs,
+            VSCoupes,
+            VSMuscle,
+            VSSportsClassic,
+            VSSports,
+            VSSuper,
+            VSMotorcycles,
+            VSOffRoad,
+            VSBoats,
+            VSHelicopters,
+            VSPlanes,
+            VSEmergency,
+            VSMilitary,
+
+            // Weapon Options
+            WPMenu,
+            WPAll,
+            WPSpawn,
+            WPGetAll,
+            WPRemoveAll,
+            WPUnlimitedAmmo,
+            WPNoReload,
+            WPSetAmmo,
+            WPSpawnAmmo,
+            WPTints,
+            WPComponents,
+
+            // Time Options
+            TOMenu,
+            TOAll,
+            TOFreezeTime,
+            TOSetTime,
+
+            // Weather Options
+            WOMenu,
+            WOAll,
+            WODynamic,
+            WOBlackout,
+            WOSetWeather,
+
+            // Misc Settings
+            MSMenu,
+            MSAll,
+            MSTeleportToWp,
+            MSTeleportLocations,
+            MSTeleportToCoord,
+            MSShowCoordinates,
+            MSShowLocation,
+            MSLockCameraX,
+            MSLockCameraY,
+            MSNightVision,
+            MSThermalVision,
+            MSRestoreAppearance,
+            MSRestoreWeapons,
+            MSClearArea,
+
+            // Teams (New)
+            TMMenu,
+            TMAll,
+            TMJoinTeam,
+            TMLeaveTeam,
+            TMViewMembers,
+
+            // Voice Settings (New - pma-voice)
+            VCMenu,
+            VCAll,
+            VCSetProximity,
+            VCSetRadioChannel,
+
+            // Racing (New)
+            RCMenu,
+            RCAll,
+            RCCreateTrack,
+            RCEditTrack,
+            RCDeleteTrack,
+            RCJoinRace,
+            RCStartRace,
+
+            // Player Appearance
+            PAMenu,
+            PAAll,
+            PASpawnPed,
+            PASavedPeds,
+            PACustomize,
+            PAAccessories,
+
+            // Saved Vehicles
+            SVMenu,
+            SVAll,
+            SVSaveVehicle,
+            SVSpawnVehicle,
+            SVDeleteVehicle,
+
+            // Personal Vehicle
+            PVMenu,
+            PVAll,
+            PVSetPersonal,
+            PVSummon,
+            PVLock,
+
+            // Weapon Loadouts
+            WLMenu,
+            WLAll,
+            WLSave,
+            WLEquip,
+            WLDelete,
+
+            // Recording
+            RECMenu,
+            RECAll,
+            RECStart,
+            RECEditor,
+            RECCamera,
+
+            // Online Players - Unban
+            OPUnban,
         }
 
-        // Check if player has the "Everything" permission (admin override)
-        if (permission != Permission.Everything)
+        public static Dictionary<Permission, bool> Permissions { get; private set; } = new Dictionary<Permission, bool>();
+        public static bool ArePermissionsSetup { get; set; } = false;
+
+#if SERVER
+        /// <summary>
+        /// Public function to check if a permission is allowed (server-side).
+        /// </summary>
+        public static bool IsAllowed(Permission permission, Player source) => IsAllowedServer(permission, source);
+
+        /// <summary>
+        /// Public function to check if a permission is allowed (server-side).
+        /// </summary>
+        public static bool IsAllowed(Permission permission, string playerHandle) => IsAllowedServer(permission, playerHandle);
+#else
+        /// <summary>
+        /// Public function to check if a permission is allowed (client-side).
+        /// </summary>
+        public static bool IsAllowed(Permission permission, bool checkAnyway = false) => IsAllowedClient(permission, checkAnyway);
+
+        private static readonly Dictionary<Permission, bool> allowedPerms = new Dictionary<Permission, bool>();
+
+        /// <summary>
+        /// Private function that handles client side permission requests.
+        /// </summary>
+        private static bool IsAllowedClient(Permission permission, bool checkAnyway)
         {
-          if (_cachedPermissions.ContainsKey(Permission.Everything) && _cachedPermissions[Permission.Everything])
-          {
-            return true;
-          }
+            if (ArePermissionsSetup || checkAnyway)
+            {
+                var staffPermissionAllowed = (
+                    Permissions.ContainsKey(Permission.Staff) && Permissions[Permission.Staff]
+                ) || (
+                    Permissions.ContainsKey(Permission.Everything) && Permissions[Permission.Everything]
+                );
+
+                if (allowedPerms.ContainsKey(permission) && allowedPerms[permission])
+                {
+                    return true;
+                }
+                else if (!allowedPerms.ContainsKey(permission))
+                {
+                    allowedPerms[permission] = false;
+                }
+
+                // Get a list of all permissions that are (parents) of the current permission
+                var permissionsToCheck = GetPermissionAndParentPermissions(permission);
+
+                // Check if any of those permissions is allowed
+                if (permissionsToCheck.Any(p => Permissions.ContainsKey(p) && Permissions[p]))
+                {
+                    allowedPerms[permission] = true;
+                    return true;
+                }
+            }
+            return false;
         }
-
-        // Check the "All" permission for the category
-        Permission allPerm = GetCategoryAllPermission(permission);
-        if (allPerm != permission && _cachedPermissions.ContainsKey(allPerm) && _cachedPermissions[allPerm])
-        {
-          return true;
-        }
-
-        // Check the specific permission
-        if (_cachedPermissions.ContainsKey(permission))
-        {
-          return _cachedPermissions[permission];
-        }
-
-        return false;
-      }
-      catch (Exception ex)
-      {
-        Debug.WriteLine($"[comboom.sucht] Error checking permission {permission}: {ex.Message}");
-        return false;
-      }
-    }
-
-    /// <summary>
-    /// Check if the current player has staff permissions
-    /// </summary>
-    public static bool IsStaff()
-    {
-      return IsAllowed(Permission.Staff) || IsAllowed(Permission.Everything);
-    }
-
-    /// <summary>
-    /// Get the "All" permission for a category (e.g., OPTeleport -> OPAll)
-    /// </summary>
-    private static Permission GetCategoryAllPermission(Permission permission)
-    {
-      string name = permission.ToString();
-      if (name.Length >= 2)
-      {
-        string prefix = name.Substring(0, 2);
-        string allName = prefix + "All";
-        if (Enum.TryParse<Permission>(allName, out Permission allPerm))
-        {
-          return allPerm;
-        }
-      }
-      return permission;
-    }
-
-    #endregion
-
-    #region Server Communication
-
-    /// <summary>
-    /// Request permissions from the server
-    /// </summary>
-    public static void RequestPermissions()
-    {
-      BaseScript.TriggerServerEvent("cbpsMenu:RequestPermissions");
-    }
-
-    /// <summary>
-    /// Set permissions from server response
-    /// Called by event handler in Main.cs
-    /// </summary>
-    public static void SetPermissions(Dictionary<string, bool> permissions)
-    {
-      _cachedPermissions.Clear();
-
-      foreach (var kvp in permissions)
-      {
-        if (Enum.TryParse<Permission>(kvp.Key, out Permission perm))
-        {
-          _cachedPermissions[perm] = kvp.Value;
-        }
-      }
-
-      PermissionsLoaded = true;
-      Debug.WriteLine($"[comboom.sucht] Loaded {_cachedPermissions.Count} permissions from server");
-    }
-
-    /// <summary>
-    /// Set a single permission (for testing or manual override)
-    /// </summary>
-    public static void SetPermission(Permission permission, bool allowed)
-    {
-      _cachedPermissions[permission] = allowed;
-    }
-
-    /// <summary>
-    /// Grant all permissions (for testing)
-    /// </summary>
-    public static void GrantAllPermissions()
-    {
-      foreach (Permission perm in Enum.GetValues(typeof(Permission)))
-      {
-        _cachedPermissions[perm] = true;
-      }
-      PermissionsLoaded = true;
-      Debug.WriteLine("[comboom.sucht] Granted all permissions (debug mode)");
-    }
-
-    #endregion
-
-    #region ACE Name Conversion
-
-    /// <summary>
-    /// Convert a Permission enum to its ACE permission name
-    /// Format: cbpsMenu.Category.Permission
-    /// </summary>
-    public static string GetAceName(Permission permission)
-    {
-      string name = permission.ToString();
-      string prefix = "cbpsMenu.";
-
-      // Determine the category based on the first 2 characters
-      if (name.Length >= 2)
-      {
-        string categoryPrefix = name.Substring(0, 2);
-
-        switch (categoryPrefix)
-        {
-          case "OP":
-            prefix += "OnlinePlayers";
-            break;
-          case "PO":
-            prefix += "PlayerOptions";
-            break;
-          case "VO":
-            prefix += "VehicleOptions";
-            break;
-          case "WP":
-            prefix += "WeaponOptions";
-            break;
-          case "WO":
-            prefix += "WorldOptions";
-            break;
-          case "VC":
-            prefix += "VoiceChat";
-            break;
-          default:
-            // Global permissions like Everything, Staff, NoClip
-            return prefix + name;
-        }
-
-        // Add the permission suffix (everything after the 2-char prefix)
-        return prefix + "." + name.Substring(2);
-      }
-
-      return prefix + name;
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    /// <summary>
-    /// Get a list of all permissions the current player has
-    /// Useful for debugging
-    /// </summary>
-    public static List<Permission> GetAllowedPermissions()
-    {
-      var allowed = new List<Permission>();
-
-      foreach (Permission perm in Enum.GetValues(typeof(Permission)))
-      {
-        if (IsAllowed(perm))
-        {
-          allowed.Add(perm);
-        }
-      }
-
-      return allowed;
-    }
-
-    /// <summary>
-    /// Debug: Print all permissions to console
-    /// </summary>
-    public static void DebugPrintPermissions()
-    {
-      Debug.WriteLine("[comboom.sucht] === Permission Debug ===");
-      foreach (Permission perm in Enum.GetValues(typeof(Permission)))
-      {
-        string aceName = GetAceName(perm);
-        bool allowed = IsAllowed(perm);
-        Debug.WriteLine($"  {perm} ({aceName}): {(allowed ? "ALLOWED" : "DENIED")}");
-      }
-      Debug.WriteLine("[comboom.sucht] === End Permission Debug ===");
-    }
-
-    #endregion
 #endif
-  }
+
+#if SERVER
+        /// <summary>
+        /// Checks if the player is allowed that specific permission.
+        /// </summary>
+        private static bool IsAllowedServer(Permission permission, Player source)
+        {
+            if (source == null)
+            {
+                return false;
+            }
+
+            return IsAllowedServer(permission, source.Handle);
+        }
+
+        /// <summary>
+        /// Checks if the player is allowed that specific permission.
+        /// </summary>
+        private static bool IsAllowedServer(Permission permission, string playerHandle)
+        {
+            if (!DoesPlayerExist(playerHandle))
+            {
+                return false;
+            }
+
+            return IsPlayerAceAllowed(playerHandle, GetAceName(permission));
+        }
+#endif
+
+        private static readonly Dictionary<Permission, List<Permission>> parentPermissions = new Dictionary<Permission, List<Permission>>();
+
+        /// <summary>
+        /// Gets the current permission and all parent permissions.
+        /// </summary>
+        public static List<Permission> GetPermissionAndParentPermissions(Permission permission)
+        {
+            if (parentPermissions.ContainsKey(permission))
+            {
+                return parentPermissions[permission];
+            }
+            else
+            {
+                var list = new List<Permission>() { Permission.Everything, permission };
+                var permStr = permission.ToString();
+
+                // If the first 2 characters are both uppercase
+                if (permStr.Length >= 2 && permStr.Substring(0, 2).ToUpper() == permStr.Substring(0, 2))
+                {
+                    if (permStr.Substring(2) is not ("All" or "Menu"))
+                    {
+                        list.AddRange(Enum.GetValues(typeof(Permission)).Cast<Permission>().Where(a => a.ToString() == permStr.Substring(0, 2) + "All"));
+                    }
+                }
+                parentPermissions[permission] = list;
+                return list;
+            }
+        }
+
+#if SERVER
+        /// <summary>
+        /// Sets the permissions for a specific player.
+        /// </summary>
+        public static void SetPermissionsForPlayer([FromSource] Player player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            var perms = new Dictionary<Permission, bool>();
+
+            // Loop through all permissions and check if they're allowed
+            foreach (var p in Enum.GetValues(typeof(Permission)))
+            {
+                var permission = (Permission)p;
+                if (!perms.ContainsKey(permission))
+                {
+                    perms.Add(permission, IsAllowed(permission, player));
+                }
+            }
+
+            // Send the permissions to the client
+            player.TriggerEvent("cbps:SetPermissions", Newtonsoft.Json.JsonConvert.SerializeObject(perms));
+        }
+#else
+        /// <summary>
+        /// Sets the permission (client side event handler).
+        /// </summary>
+        public static void SetPermissions(string permissions)
+        {
+            Permissions = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<Permission, bool>>(permissions);
+            ArePermissionsSetup = true;
+        }
+#endif
+
+#if SERVER
+        /// <summary>
+        /// Gets the full permission ace name for the specific Permission enum.
+        /// </summary>
+        private static string GetAceName(Permission permission)
+        {
+            var name = permission.ToString();
+            var prefix = "cbps.";
+
+            switch (name.Substring(0, 2))
+            {
+                case "OP":
+                    prefix += "OnlinePlayers";
+                    break;
+                case "PO":
+                    prefix += "PlayerOptions";
+                    break;
+                case "VO":
+                    prefix += "VehicleOptions";
+                    break;
+                case "VS":
+                    prefix += "VehicleSpawner";
+                    break;
+                case "TO":
+                    prefix += "TimeOptions";
+                    break;
+                case "WO":
+                    prefix += "WeatherOptions";
+                    break;
+                case "TM":
+                    prefix += "Teams";
+                    break;
+                case "VC":
+                    prefix += "VoiceChat";
+                    break;
+                case "RC":
+                    prefix += "Racing";
+                    break;
+                default:
+                    return prefix + name;
+            }
+
+            return prefix + "." + name.Substring(2);
+        }
+#endif
+    }
 }

@@ -1,10 +1,7 @@
-## Navigation
+# comboom.sucht Menu - Sidebar
 
-- [**Home**](Home)
-- [**Features**](Features)
-- [**Installation**](Installation)
-
-### User Guides
-
-- [Race Creator](Guide-Race-Creator)
-- [Radio & Voice](Guide-Radio-Voice)
+- [Home](Home)
+- [Installation](Installation)
+- [Features](Features)
+- [Radio & Voice Guide](Guide-Radio-Voice)
+- [Race Creator Guide](Guide-Race-Creator)

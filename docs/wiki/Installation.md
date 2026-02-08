@@ -1,72 +1,105 @@
 # Installation Guide
 
-Follow these steps to install and configure **comboom.sucht menu** on your FiveM server.
+Follow these steps to install **comboom.sucht menu** on your FiveM server.
 
-## 📥 Prerequisites
+## 📥 Download
 
-Before installing, ensure your server has the following dependencies running:
+Get the latest release from [GitHub Releases](https://github.com/comboomPunkTsucht/fivem-cbps-menu/releases/latest).
 
-1. **[pma-voice](https://github.com/AvarianKnight/pma-voice)**
-   _Required for voice proximity features._
-2. **[pma-radio](https://github.com/AvarianKnight/pma-radio)**
-   _Required for radio frequency management._
+## 🛠️ Installation
 
-## 🛠️ Installation Steps
-
-### 1. Download Release
-
-Download the latest `fivem-cbps-menu.zip` from the [Releases](https://github.com/comboomPunkTsucht/fivem-cbps-menu/releases/latest) page.
-
-### 2. Extract Files
-
-Extract the contents of the zip file into your server's `resources` directory.
-Your folder structure should look like this:
+### 1. Extract to Resources
 
 ```
 resources/
-└── fivem-cbps-menu/
-    ├── CBPSMenu.net.dll        # Client Assembly
-    ├── CBPSMenu.Server.net.dll # Server Assembly
-    ├── LemonUI.FiveM.dll       # UI Library
-    ├── config.lua              # Configuration
-    └── fxmanifest.lua          # Resource Manifest
+└── comboom.sucht-menu/
+    ├── CBPSMenu.net.dll
+    ├── CBPSMenu.Server.net.dll
+    ├── LemonUI.FiveM.dll
+    ├── Newtonsoft.Json.dll
+    ├── config.json
+    └── fxmanifest.lua
 ```
 
-### 3. Configure Server
-
-Open your `server.cfg` file and add the following lines **in this order**:
+### 2. Add to server.cfg
 
 ```cfg
-# Dependencies
+# comboom.sucht Menu
+ensure comboom.sucht-menu
+
+# Optional: pma-voice for radio features
 ensure pma-voice
-ensure pma-radio
-
-# Menu System
-ensure fivem-cbps-menu
 ```
 
-> [!IMPORTANT]
-> `pma-radio` MUST be started for the Radio features in the Voice Menu to function correctly.
-
-### 4. Permissions (ACE)
-
-To grant administrative access (required for Online Players menu actions like Kick/Ban), add the following ACE permissions to your `server.cfg`:
+### 3. Configure Permissions
 
 ```cfg
-# Admin Group (Full Access)
-add_ace group.admin cbpsMenu.Everything allow
+# Admin (Full Access)
+add_ace group.admin cbps.Everything allow
 
-# Moderator Group (Specific Access)
-add_ace group.moderator cbpsMenu.OnlinePlayers.Teleport allow
-add_ace group.moderator cbpsMenu.OnlinePlayers.Spectate allow
+# Moderator
+add_ace group.moderator cbps.POMenu allow
+add_ace group.moderator cbps.VOMenu allow
+add_ace group.moderator cbps.OPMenu allow
+
+# Basic User
+add_ace group.user cbps.POMenu allow
+add_ace group.user cbps.VSMenu allow
+add_ace group.user cbps.TMMenu allow
 ```
 
 ## ⚙️ Configuration
 
-You can customize keybinds and other settings in `config.lua`.
+Edit `config.json`:
 
-```lua
-Config.MenuKey = 'F1' -- Default key to open menu
-Config.Voice.Enabled = true
-Config.Race.Enabled = true
+```json
+{
+  "menuTitle": "comboom.sucht Menu",
+  "menuSubtitle": "vMenu Clone",
+  "menuKey": "F1",
+  "theme": {
+    "headerColor": { "r": 94, "g": 129, "b": 172, "a": 255 },
+    "highlightColor": { "r": 136, "g": 192, "b": 208, "a": 255 },
+    "backgroundColor": { "r": 46, "g": 52, "b": 64, "a": 200 }
+  }
+}
 ```
+
+## 🔑 Key Permissions
+
+| Permission        | Description            |
+| ----------------- | ---------------------- |
+| `cbps.Everything` | All permissions        |
+| `cbps.POMenu`     | Player Options menu    |
+| `cbps.VOMenu`     | Vehicle Options menu   |
+| `cbps.VSMenu`     | Vehicle Spawner menu   |
+| `cbps.WPMenu`     | Weapon Options menu    |
+| `cbps.PAMenu`     | Player Appearance menu |
+| `cbps.SVMenu`     | Saved Vehicles menu    |
+| `cbps.PVMenu`     | Personal Vehicle menu  |
+| `cbps.WLMenu`     | Weapon Loadouts menu   |
+| `cbps.MSMenu`     | Misc Settings menu     |
+| `cbps.RECMenu`    | Recording menu         |
+| `cbps.OPMenu`     | Online Players menu    |
+| `cbps.WOMenu`     | Weather Options menu   |
+| `cbps.TOMenu`     | Time Options menu      |
+| `cbps.TMMenu`     | Teams menu             |
+| `cbps.VCMenu`     | Voice Settings menu    |
+| `cbps.NoClip`     | NoClip permission      |
+| `cbps.Staff`      | Staff-only features    |
+
+## 🎮 Keybindings
+
+| Key    | Action        |
+| ------ | ------------- |
+| **F1** | Open Menu     |
+| **F2** | Toggle NoClip |
+
+## 🔧 Building from Source
+
+```bash
+cd fivem-cbps-menu
+dotnet build -c Release
+```
+
+Output files in `dist/` folder.
