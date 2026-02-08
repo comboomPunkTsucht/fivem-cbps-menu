@@ -7,7 +7,12 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <LangVersion>latest</LangVersion>
     <RootNamespace>CBPSMenu.Client</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="**/*.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CitizenFX.Core.Client" Version="1.0.10230" />
@@ -15,9 +20,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="Shared/**/*.cs" LinkBase="Shared" />
-  </ItemGroup>
+
 
   <!-- Copy dependencies to dist folder -->
   <Target Name="CopyDependencies" AfterTargets="Build">
