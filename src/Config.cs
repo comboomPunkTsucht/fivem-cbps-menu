@@ -6,6 +6,8 @@ using CitizenFX.Core;
 
 using static CitizenFX.Core.Native.API;
 
+using CBPSMenu.Shared;
+
 namespace CBPSMenu.Client
 {
     /// <summary>
