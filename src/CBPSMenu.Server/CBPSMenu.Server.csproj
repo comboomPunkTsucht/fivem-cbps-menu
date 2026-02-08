@@ -3,7 +3,7 @@
     <TargetFramework>net452</TargetFramework>
     <AssemblyName>CBPSMenu.Server.net</AssemblyName>
     <OutputType>Library</OutputType>
-    <OutputPath>../../dist/Server/</OutputPath>
+    <OutputPath>../../dist/</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <LangVersion>latest</LangVersion>
     <DefineConstants>SERVER</DefineConstants>
@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="CitizenFX.Core.Server" Version="1.0.10230" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>
